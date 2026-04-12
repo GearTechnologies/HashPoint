@@ -157,7 +157,7 @@ contract HashPointEscrow is EIP712, ReentrancyGuard, Ownable, Pausable {
                 expectedNative += intents[i].amount;
             }
         }
-        require(msg.value == expectedNative, "msg.value mismatch");
+        require(msg.value == expectedNative, "msg.value must equal total native token amount across all intents");
 
         // Track per-merchant totals for BatchSettled events
         uint256 successCount;
@@ -225,7 +225,7 @@ contract HashPointEscrow is EIP712, ReentrancyGuard, Ownable, Pausable {
         // Signature verification — use tryRecover to handle malformed signatures gracefully
         bytes32 structHash = _hashIntent(intent);
         (address signer, ECDSA.RecoverError err, ) = ECDSA.tryRecover(structHash, sig);
-        if (err != ECDSA.RecoverError.NoError || signer != intent.customer) revert InvalidSignature();
+        if (err != ECDSA.RecoverError.NoError || signer == address(0) || signer != intent.customer) revert InvalidSignature();
 
         // Nonce spend (also verifies session active + nonce validity)
         nonceRegistry.spendNonce(intent.merchant, intent.sessionId, intent.nonce, merkleProof);

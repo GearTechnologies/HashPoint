@@ -78,6 +78,10 @@ export class NonceManager {
       treeRoot: this.merkleTree
         ? "0x" + this.merkleTree.getRoot().toString("hex")
         : null,
+      // Serialize leaves in insertion order so the tree can be reconstructed
+      leaves: this.merkleTree
+        ? this.merkleTree.getLeaves().map((l) => l.toString("hex"))
+        : [],
     });
   }
 
@@ -89,6 +93,14 @@ export class NonceManager {
         manager.nonces.set(key, value);
       }
     );
+    // Reconstruct the Merkle tree from the serialized leaves so that
+    // getMerkleProof() continues to work after deserialization.
+    if (parsed.leaves && parsed.leaves.length > 0) {
+      const leaves = (parsed.leaves as string[]).map((hex) =>
+        Buffer.from(hex, "hex")
+      );
+      manager.merkleTree = new MerkleTree(leaves, keccak256, { sortPairs: true });
+    }
     return manager;
   }
 }

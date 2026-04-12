@@ -25,7 +25,7 @@ export function TransactionList({ transactions }: TransactionListProps) {
       style={{ height: "400px" }}
       data={transactions}
       itemContent={(_, tx) => (
-        <TransactionRow key={tx.id} tx={tx} />
+        <TransactionRow tx={tx} />
       )}
     />
   );
