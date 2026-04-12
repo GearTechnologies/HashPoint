@@ -8,12 +8,19 @@ export class ConnectivityMonitor {
   private _pingInterval: ReturnType<typeof setInterval> | null = null;
   private _rpcUrl: string;
 
+  // Store bound handlers so the same reference is used for add and remove
+  private readonly _boundHandleOnline: () => void;
+  private readonly _boundHandleOffline: () => void;
+
   constructor(rpcUrl: string = "https://mainnet.hsk.xyz") {
     this._rpcUrl = rpcUrl;
     this._isOnline = navigator.onLine;
 
-    window.addEventListener("online", this._handleOnline.bind(this));
-    window.addEventListener("offline", this._handleOffline.bind(this));
+    this._boundHandleOnline = this._handleOnline.bind(this);
+    this._boundHandleOffline = this._handleOffline.bind(this);
+
+    window.addEventListener("online", this._boundHandleOnline);
+    window.addEventListener("offline", this._boundHandleOffline);
   }
 
   start(pingIntervalMs: number = 30_000): void {
@@ -32,8 +39,8 @@ export class ConnectivityMonitor {
       clearInterval(this._pingInterval);
       this._pingInterval = null;
     }
-    window.removeEventListener("online", this._handleOnline.bind(this));
-    window.removeEventListener("offline", this._handleOffline.bind(this));
+    window.removeEventListener("online", this._boundHandleOnline);
+    window.removeEventListener("offline", this._boundHandleOffline);
   }
 
   get isOnline(): boolean {

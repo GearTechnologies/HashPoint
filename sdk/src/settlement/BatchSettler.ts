@@ -135,7 +135,9 @@ export class BatchSettler {
   }
 
   async estimateGas(count: number): Promise<bigint> {
-    // Rough estimate: 150k gas per intent
+    // Rough estimate: ~150k gas per intent. Actual usage varies by token type
+    // (native HSK is cheaper than ERC-20 safeTransferFrom), nonce proof depth,
+    // and network conditions. A 1.25x safety margin is recommended when setting gas limits.
     return BigInt(count) * 150_000n;
   }
 

@@ -149,6 +149,16 @@ contract HashPointEscrow is EIP712, ReentrancyGuard, Ownable, Pausable {
             "Length mismatch"
         );
 
+        // Validate that msg.value exactly equals the total native amount across all intents.
+        // This prevents excess ETH from becoming locked in the contract.
+        uint256 expectedNative;
+        for (uint256 i = 0; i < intents.length; i++) {
+            if (intents[i].token == address(0)) {
+                expectedNative += intents[i].amount;
+            }
+        }
+        require(msg.value == expectedNative, "msg.value mismatch");
+
         // Track per-merchant totals for BatchSettled events
         uint256 successCount;
         uint256 totalNative;
@@ -179,6 +189,12 @@ contract HashPointEscrow is EIP712, ReentrancyGuard, Ownable, Pausable {
         if (successCount > 0 && batchMerchant != address(0)) {
             emit BatchSettled(batchMerchant, successCount, batchTotal, batchToken);
         }
+
+        // Refund any ETH from failed native intents back to the caller
+        uint256 unspent = expectedNative - totalNative;
+        if (unspent > 0) {
+            _transferNative(msg.sender, unspent);
+        }
     }
 
     /**
@@ -206,10 +222,10 @@ contract HashPointEscrow is EIP712, ReentrancyGuard, Ownable, Pausable {
         // Expiry check
         if (block.timestamp > intent.expiry) revert IntentExpired();
 
-        // Signature verification
+        // Signature verification — use tryRecover to handle malformed signatures gracefully
         bytes32 structHash = _hashIntent(intent);
-        address signer = ECDSA.recover(structHash, sig);
-        if (signer != intent.customer) revert InvalidSignature();
+        (address signer, ECDSA.RecoverError err, ) = ECDSA.tryRecover(structHash, sig);
+        if (err != ECDSA.RecoverError.NoError || signer != intent.customer) revert InvalidSignature();
 
         // Nonce spend (also verifies session active + nonce validity)
         nonceRegistry.spendNonce(intent.merchant, intent.sessionId, intent.nonce, merkleProof);

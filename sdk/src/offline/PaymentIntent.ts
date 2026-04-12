@@ -15,7 +15,8 @@ export interface PaymentIntentData {
 export const HASHPOINT_DOMAIN = {
   name: "HashPoint",
   version: "1",
-  // HashKey Chain mainnet chainId — replace with actual value
+  // HashKey Chain mainnet chainId — update to 133 for testnet or 31337 for local Hardhat
+  // This must match the `chainId` set in `NEXT_PUBLIC_CHAIN_ID` and the deployed contract network.
   chainId: 177, // HashKey Chain mainnet
   verifyingContract: "", // HashPointEscrow deployed address
 };

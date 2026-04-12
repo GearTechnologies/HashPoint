@@ -22,6 +22,9 @@ export interface RelayIntent {
   error?: string;
 }
 
+/** Minimum seconds remaining before expiry to accept an intent for relay. */
+const MIN_EXPIRY_BUFFER_SECONDS = 600; // 10 minutes
+
 /**
  * RelayService accepts signed PaymentIntents from merchants who cannot
  * submit transactions themselves and relays them to HashKey Chain.
@@ -48,7 +51,7 @@ export class RelayService {
   ): Promise<string> {
     // Reject intents expiring in < 10 minutes
     const now = Math.floor(Date.now() / 1000);
-    if (intent.expiry - now < 600) {
+    if (intent.expiry - now < MIN_EXPIRY_BUFFER_SECONDS) {
       throw new Error("Intent expires too soon (< 10 minutes)");
     }
 

@@ -5,6 +5,9 @@ import { useRouter } from "next/router";
 import { decodeQRPayload } from "@hashpoint/sdk";
 import { PaymentQR } from "../../../components/PaymentQR";
 
+/** Delay in ms before redirecting to dashboard after manual payment confirmation. */
+const REDIRECT_DELAY_MS = 2000;
+
 export default function QRDisplay() {
   const router = useRouter();
   const { intentId, qr } = router.query as Record<string, string>;
@@ -27,7 +30,7 @@ export default function QRDisplay() {
 
   const handleManualConfirm = () => {
     setConfirmed(true);
-    setTimeout(() => router.push("/dashboard"), 2000);
+    setTimeout(() => router.push("/dashboard"), REDIRECT_DELAY_MS);
   };
 
   if (!qr) return null;
