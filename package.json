@@ -1,0 +1,23 @@
+{
+  "name": "hashpoint",
+  "version": "1.0.0",
+  "description": "Offline-first crypto point-of-sale on HashKey Chain",
+  "private": true,
+  "workspaces": [
+    "contracts",
+    "sdk",
+    "merchant-app",
+    "backend"
+  ],
+  "dependencies": {
+    "ethers": "^6.11.0"
+  },
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present"
+  },
+  "overrides": {
+    "ethers": "^6.11.0"
+  }
+}
