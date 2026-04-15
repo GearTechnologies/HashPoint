@@ -1,0 +1,12 @@
+{
+  "network": "hashkeyTestnet",
+  "chainId": 133,
+  "deployedAt": "2026-04-15T16:29:52.419Z",
+  "contracts": {
+    "NonceRegistry": "0xC5a2A6Dfc78DAcB4AAF474124Cb7f56360F23430",
+    "MerchantRegistry": "0x461D7501ae9493b4678C60F97A903fc51069152A",
+    "HSPAdapter": "0x71Fb66498976B7e09fB9FC176Fb1fb53959a4A54",
+    "HashPointEscrow": "0x21ab93a1494b1B0E3eafdB24E3703F12F8AfeC20",
+    "MockUSDC": "0x0a468e2506ff15a74c8D094CC09e48561969Aa12"
+  }
+}

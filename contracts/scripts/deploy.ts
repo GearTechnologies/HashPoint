@@ -64,17 +64,30 @@ async function main() {
   await tx2.wait();
   console.log("   Escrow set on MerchantRegistry");
 
-  // 7. Write deployed addresses to deployments/{network}.json
+  // 7. Deploy MockUSDC (test networks only)
+  let mockUsdcAddr = "";
   const networkName = network.name;
-  const deployments = {
+  if (networkName !== "hashkeyMainnet") {
+    console.log("7. Deploying MockUSDC (testnet only)...");
+    const MockUSDC = await ethers.getContractFactory("MockUSDC");
+    const mockUsdc = await MockUSDC.deploy(deployer.address);
+    await mockUsdc.waitForDeployment();
+    mockUsdcAddr = await mockUsdc.getAddress();
+    console.log("   MockUSDC:", mockUsdcAddr);
+  }
+
+  // 8. Write deployed addresses to deployments/{network}.json
+  const chainId = Number((await ethers.provider.getNetwork()).chainId);
+  const deployments: Record<string, unknown> = {
     network: networkName,
-    chainId: Number((await ethers.provider.getNetwork()).chainId),
+    chainId,
     deployedAt: new Date().toISOString(),
     contracts: {
       NonceRegistry: nonceRegistryAddr,
       MerchantRegistry: merchantRegistryAddr,
       HSPAdapter: hspAdapterAddr,
       HashPointEscrow: escrowAddr,
+      ...(mockUsdcAddr ? { MockUSDC: mockUsdcAddr } : {}),
     },
   };
 
@@ -93,7 +106,9 @@ async function main() {
   console.log("MerchantRegistry: ", merchantRegistryAddr);
   console.log("HSPAdapter:       ", hspAdapterAddr);
   console.log("HashPointEscrow:  ", escrowAddr);
+  if (mockUsdcAddr) console.log("MockUSDC:         ", mockUsdcAddr);
   console.log("\nUpdate SDK HASHPOINT_DOMAIN.verifyingContract with:", escrowAddr);
+  if (mockUsdcAddr) console.log("Set NEXT_PUBLIC_USDC_ADDRESS =", mockUsdcAddr);
 }
 
 main().catch((error) => {
