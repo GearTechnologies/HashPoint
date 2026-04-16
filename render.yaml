@@ -2,6 +2,7 @@ services:
   - type: web
     name: hashpoint-backend
     runtime: node
+    plan: free
     region: oregon
     rootDir: backend
     buildCommand: npm install && npm run build
