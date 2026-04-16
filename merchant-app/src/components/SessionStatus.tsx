@@ -57,6 +57,7 @@ export function SessionStatus() {
         </svg>
       </div>
       <div className="session-status__info">
+        <div>Session ID: {session.sessionId.toString()}</div>
         <div>{remainingNonces} / {session.maxPayments} slots remaining</div>
         {isExpired ? (
           <div className="session-status__expired">Session expired</div>

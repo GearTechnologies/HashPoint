@@ -31,6 +31,42 @@ export const PAYMENT_INTENT_TYPES = {
   ],
 };
 
+function encodeUtf8ToBase64(value: string): string {
+  if (typeof globalThis.btoa === "function") {
+    const bytes = new TextEncoder().encode(value);
+    let binary = "";
+    for (const byte of bytes) {
+      binary += String.fromCharCode(byte);
+    }
+    return globalThis.btoa(binary);
+  }
+
+  return Buffer.from(value, "utf8").toString("base64");
+}
+
+function decodeBase64ToUtf8(value: string): string {
+  if (typeof globalThis.atob === "function") {
+    const binary = globalThis.atob(value);
+    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+    return new TextDecoder().decode(bytes);
+  }
+
+  return Buffer.from(value, "base64").toString("utf8");
+}
+
+function encodeBase64Url(value: string): string {
+  return encodeUtf8ToBase64(value)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+}
+
+function decodeBase64Url(value: string): string {
+  const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padding = (4 - (base64.length % 4)) % 4;
+  return decodeBase64ToUtf8(base64 + "=".repeat(padding));
+}
+
 /**
  * Creates and signs a PaymentIntent offline using EIP-712.
  * This is called on the CUSTOMER's device — no network required.
@@ -72,14 +108,14 @@ export function encodeQRPayload(intent: PaymentIntentData, signature: string): s
     ch: intent.chainId,
     sig: signature,
   };
-  return Buffer.from(JSON.stringify(payload)).toString("base64url");
+  return encodeBase64Url(JSON.stringify(payload));
 }
 
 export function decodeQRPayload(encoded: string): {
   intent: PaymentIntentData;
   signature: string;
 } {
-  const payload = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8"));
+  const payload = JSON.parse(decodeBase64Url(encoded));
   return {
     intent: {
       merchant: payload.m,

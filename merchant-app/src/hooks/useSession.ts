@@ -14,6 +14,13 @@ const MANAGER_KEY = "hashpoint:nonce_manager";
 
 let _manager: NonceManager | null = null;
 
+export interface PreparedSession {
+  nonceRoot: string;
+  nonces: string[];
+  expiry: number;
+  maxPayments: number;
+}
+
 function loadFromStorage(): { session: Session | null; remaining: number } {
   if (typeof window === "undefined") return { session: null, remaining: 0 };
   try {
@@ -68,29 +75,51 @@ export function useSession() {
     setSessionState(s);
   }, []);
 
-  const openSession = useCallback(
-    async (
-      maxPayments: number,
-      durationSeconds: number
-    ): Promise<{ nonceRoot: string; nonces: string[] }> => {
+  const prepareSession = useCallback(
+    (maxPayments: number, durationSeconds: number): PreparedSession => {
       _manager = new NonceManager();
       const { nonceRoot, nonces } = _manager.prepareSession(maxPayments);
       const expiry = Math.floor(Date.now() / 1000) + durationSeconds;
 
-      const newSession: Session = {
-        sessionId: 0n,
+      return {
         nonceRoot,
         nonces,
         expiry,
         maxPayments,
       };
-      setSessionState(newSession);
-      setRemainingNonces(maxPayments);
-      saveToStorage(newSession, _manager);
-
-      return { nonceRoot, nonces };
     },
     []
+  );
+
+  const activateSession = useCallback((prepared: PreparedSession, sessionId: bigint) => {
+    if (!_manager) {
+      throw new Error("Session manager is not initialized.");
+    }
+
+    const newSession: Session = {
+      sessionId,
+      nonceRoot: prepared.nonceRoot,
+      nonces: prepared.nonces,
+      expiry: prepared.expiry,
+      maxPayments: prepared.maxPayments,
+    };
+
+    setSessionState(newSession);
+    setRemainingNonces(prepared.maxPayments);
+    saveToStorage(newSession, _manager);
+  }, []);
+
+  const openSession = useCallback(
+    async (
+      maxPayments: number,
+      durationSeconds: number
+    ): Promise<{ nonceRoot: string; nonces: string[] }> => {
+      const prepared = prepareSession(maxPayments, durationSeconds);
+      activateSession(prepared, 0n);
+
+      return { nonceRoot: prepared.nonceRoot, nonces: prepared.nonces };
+    },
+    [activateSession, prepareSession]
   );
 
   const getNextNonce = useCallback((): string | null => {
@@ -124,6 +153,8 @@ export function useSession() {
   return {
     session,
     setSession,
+    prepareSession,
+    activateSession,
     openSession,
     closeSession,
     remainingNonces,

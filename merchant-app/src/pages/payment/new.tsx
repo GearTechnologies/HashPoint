@@ -4,17 +4,11 @@ import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { ethers } from "ethers";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount, useWalletClient } from "wagmi";
+import { useAccount } from "wagmi";
 import { useConnectivity } from "../../hooks/useConnectivity";
 import { useSession } from "../../hooks/useSession";
-import { useSettlementQueue } from "../../hooks/useSettlementQueue";
 import { getSupportedTokens, normalizeAddress, parseTokenAmount, requireAddress } from "../../lib/chain";
-import {
-  encodeQRPayload,
-  HASHPOINT_DOMAIN_BASE,
-  PAYMENT_INTENT_TYPES,
-  type PaymentIntentData,
-} from "@hashpoint/sdk";
+import { encodePaymentRequest, generateRequestId } from "../../lib/paymentRequest";
 
 const TOKENS = getSupportedTokens();
 
@@ -22,9 +16,7 @@ export default function NewPayment() {
   const router = useRouter();
   const { isOnline } = useConnectivity();
   const { session, getNextNonce, getMerkleProof } = useSession();
-  const { enqueue } = useSettlementQueue();
   const { address, isConnected } = useAccount();
-  const { data: walletClient } = useWalletClient();
 
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
@@ -47,8 +39,12 @@ export default function NewPayment() {
       setError("No active session. Open a session first.");
       return;
     }
-    if (!isConnected || !address || !walletClient) {
-      setError("Please connect your wallet first.");
+    if (session.sessionId === 0n) {
+      setError("Active session is only local. Reopen it from Session Manager so it is committed on-chain.");
+      return;
+    }
+    if (!isConnected || !address) {
+      setError("Please connect the merchant wallet first.");
       return;
     }
     const nonce = getNextNonce();
@@ -60,6 +56,7 @@ export default function NewPayment() {
     setLoading(true);
     setError("");
     try {
+      const requestNonce = nonce as `0x${string}`;
       const walletAddress = normalizeAddress(address, { allowZeroAddress: false });
       if (!walletAddress) {
         throw new Error("Connected wallet address is invalid.");
@@ -76,46 +73,30 @@ export default function NewPayment() {
         "NEXT_PUBLIC_ESCROW_ADDRESS",
         { allowZeroAddress: false }
       );
+      if (!contractAddress) {
+        throw new Error("NEXT_PUBLIC_ESCROW_ADDRESS is not configured.");
+      }
 
-      const intent: PaymentIntentData = {
+      const merkleProof = getMerkleProof(requestNonce) as `0x${string}`[];
+      if (merkleProof.length === 0) {
+        throw new Error("Failed to build a Merkle proof for this payment request.");
+      }
+
+      const requestPayload = encodePaymentRequest({
         merchant: walletAddress,
-        customer: walletAddress,
         token: token.address,
         amount: amountWei,
         sessionId: session.sessionId,
-        nonce,
+        nonce: requestNonce,
         expiry,
         merchantRef,
         chainId,
-      };
-
-      // Sign using viem walletClient — avoids ethers ENS resolution entirely
-      const signature = await walletClient.signTypedData({
-        domain: {
-          ...HASHPOINT_DOMAIN_BASE,
-          chainId,
-          verifyingContract: contractAddress as `0x${string}`,
-        },
-        types: PAYMENT_INTENT_TYPES as Parameters<typeof walletClient.signTypedData>[0]["types"],
-        primaryType: "PaymentIntent",
-        message: {
-          merchant: walletAddress,
-          customer: walletAddress,
-          token: token.address,
-          amount: amountWei,
-          sessionId: intent.sessionId,
-          nonce: intent.nonce as `0x${string}`,
-          expiry: BigInt(expiry),
-          merchantRef,
-          chainId: BigInt(chainId),
-        },
+        merkleProof,
       });
 
-      const qrPayload = encodeQRPayload(intent, signature);
-      const merkleProof = getMerkleProof(nonce);
-      const id = await enqueue(intent, signature, merkleProof);
+      const id = generateRequestId();
 
-      router.push(`/payment/qr/${id}?qr=${encodeURIComponent(qrPayload)}&amount=${amount}&token=${token.label}`);
+      router.push(`/payment/qr/${id}?request=${encodeURIComponent(requestPayload)}`);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to create payment");
     } finally {

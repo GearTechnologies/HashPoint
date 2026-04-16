@@ -2,9 +2,18 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/router";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAccount, usePublicClient, useWalletClient } from "wagmi";
+import { parseAbi } from "viem";
 import { SessionStatus } from "../components/SessionStatus";
 import { useSession } from "../hooks/useSession";
 import { useConnectivity } from "../hooks/useConnectivity";
+import { requireAddress } from "../lib/chain";
+
+const NONCE_REGISTRY_ABI = parseAbi([
+  "function openSession(bytes32 nonceRoot, uint256 durationSeconds, uint256 maxPayments) returns (uint256)",
+  "function currentSessionId(address merchant) view returns (uint256)",
+]);
 
 const DURATIONS = [
   { label: "1 hour", seconds: 3600 },
@@ -15,8 +24,11 @@ const DURATIONS = [
 
 export default function SessionPage() {
   const router = useRouter();
-  const { session, openSession, closeSession } = useSession();
+  const { session, prepareSession, activateSession, closeSession } = useSession();
   const { isOnline } = useConnectivity();
+  const { address, isConnected } = useAccount();
+  const { data: walletClient } = useWalletClient();
+  const publicClient = usePublicClient();
 
   const [selectedDuration, setSelectedDuration] = useState(DURATIONS[0]);
   const [maxPayments, setMaxPayments] = useState(100);
@@ -28,12 +40,38 @@ export default function SessionPage() {
       setError("Must be online to open a session");
       return;
     }
+    if (!isConnected || !address || !walletClient || !publicClient) {
+      setError("Connect the merchant wallet to open an on-chain session.");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
-      await openSession(maxPayments, selectedDuration.seconds);
-      // In production: call NonceRegistry.openSession on-chain here
+      const prepared = prepareSession(maxPayments, selectedDuration.seconds);
+      const nonceRegistryAddress = requireAddress(
+        process.env.NEXT_PUBLIC_NONCE_REGISTRY_ADDRESS,
+        "NEXT_PUBLIC_NONCE_REGISTRY_ADDRESS",
+        { allowZeroAddress: false }
+      );
+
+      const hash = await walletClient.writeContract({
+        address: nonceRegistryAddress,
+        abi: NONCE_REGISTRY_ABI,
+        functionName: "openSession",
+        args: [prepared.nonceRoot as `0x${string}`, BigInt(selectedDuration.seconds), BigInt(maxPayments)],
+      });
+
+      await publicClient.waitForTransactionReceipt({ hash });
+      const sessionId = await publicClient.readContract({
+        address: nonceRegistryAddress,
+        abi: NONCE_REGISTRY_ABI,
+        functionName: "currentSessionId",
+        args: [address as `0x${string}`],
+      });
+
+      activateSession(prepared, sessionId);
     } catch (err: unknown) {
+      closeSession();
       setError(err instanceof Error ? err.message : "Failed to open session");
     } finally {
       setLoading(false);
@@ -45,6 +83,9 @@ export default function SessionPage() {
       <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
         <button onClick={() => router.back()} style={{ background: "none", border: "none", fontSize: "20px", cursor: "pointer", padding: "4px 8px" }}>←</button>
         <h1 style={{ margin: 0 }}>Session Manager</h1>
+        <div style={{ marginLeft: "auto" }}>
+          <ConnectButton showBalance={false} accountStatus="address" chainStatus="none" />
+        </div>
       </div>
       <SessionStatus />
 

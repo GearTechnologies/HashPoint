@@ -1,19 +1,23 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/router";
-import { decodeQRPayload } from "@hashpoint/sdk";
 import { PaymentQR } from "../../../components/PaymentQR";
+import { formatTokenAmount, getTokenByAddress } from "../../../lib/chain";
+import { buildMetaMaskPaymentUrl, buildPaymentUrl, decodePaymentRequest } from "../../../lib/paymentRequest";
 
 /** Delay in ms before redirecting to dashboard after manual payment confirmation. */
 const REDIRECT_DELAY_MS = 2000;
 
 export default function QRDisplay() {
   const router = useRouter();
-  const { intentId, qr } = router.query as Record<string, string>;
+  const { intentId, request } = router.query as Record<string, string>;
 
   const [confirmed, setConfirmed] = useState(false);
   const [countdown, setCountdown] = useState(30);
+  const [paymentUrl, setPaymentUrl] = useState("");
+  const [metaMaskUrl, setMetaMaskUrl] = useState("");
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -33,14 +37,27 @@ export default function QRDisplay() {
     setTimeout(() => router.push("/dashboard"), REDIRECT_DELAY_MS);
   };
 
-  if (!qr) return null;
+  useEffect(() => {
+    if (!intentId || !request || typeof window === "undefined") return;
+    const url = buildPaymentUrl(window.location.origin, intentId, request);
+    setPaymentUrl(url);
+    setMetaMaskUrl(buildMetaMaskPaymentUrl(url));
+  }, [intentId, request]);
 
-  let intent, signature;
+  if (!request) return null;
+
+  let paymentRequest;
   try {
-    ({ intent, signature } = decodeQRPayload(qr));
+    paymentRequest = decodePaymentRequest(request);
   } catch {
-    return <div>Invalid QR payload</div>;
+    return <div>Invalid payment request</div>;
   }
+
+  const token = getTokenByAddress(paymentRequest.token);
+  const amountLabel = `${formatTokenAmount(paymentRequest.amount, paymentRequest.token)} ${token.label}`;
+  const scanInstruction = paymentUrl.includes("localhost")
+    ? "This QR was generated from localhost, so it is only reachable on this device. Deploy the app or use a public URL before asking a customer to scan it."
+    : "Scan with MetaMask or your phone camera to open the customer payment page.";
 
   return (
     <div
@@ -62,7 +79,17 @@ export default function QRDisplay() {
         </div>
       ) : (
         <>
-          <PaymentQR intent={intent} qrPayload={qr} />
+          {metaMaskUrl ? (
+            <PaymentQR
+              amountLabel={amountLabel}
+              reference={paymentRequest.merchantRef}
+              qrValue={metaMaskUrl}
+              merchantName={process.env.NEXT_PUBLIC_MERCHANT_NAME}
+              helperText={scanInstruction}
+            />
+          ) : (
+            <div>Preparing payment QR…</div>
+          )}
           <div
             style={{
               marginTop: "16px",
@@ -72,6 +99,41 @@ export default function QRDisplay() {
           >
             Auto-returning in {countdown}s
           </div>
+          {paymentUrl && (
+            <div style={{ marginTop: "16px", display: "grid", gap: "8px" }}>
+              <a
+                href={metaMaskUrl || paymentUrl}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: "block",
+                  padding: "12px 16px",
+                  backgroundColor: "#F6851B",
+                  color: "white",
+                  borderRadius: "8px",
+                  fontWeight: 700,
+                  textDecoration: "none",
+                }}
+              >
+                Open Customer Flow in MetaMask
+              </a>
+              <Link
+                href={paymentUrl}
+                target="_blank"
+                style={{
+                  display: "block",
+                  padding: "12px 16px",
+                  backgroundColor: "#F4F5F7",
+                  color: "#172B4D",
+                  borderRadius: "8px",
+                  fontWeight: 600,
+                  textDecoration: "none",
+                }}
+              >
+                Open Customer Payment Page
+              </Link>
+            </div>
+          )}
           <button
             onClick={handleManualConfirm}
             style={{
