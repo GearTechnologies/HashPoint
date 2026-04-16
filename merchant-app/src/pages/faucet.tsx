@@ -5,7 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { ethers } from "ethers";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount, useWalletClient } from "wagmi";
+import { useAccount, useWalletClient, usePublicClient } from "wagmi";
+import { parseAbi } from "viem";
+
+const ERC20_WRITE_ABI = parseAbi(["function faucet() external"]);
+const HSK_WRITE_ABI = parseAbi(["function claim() external"]);
+
+const ERC20_WRITE_ABI = parseAbi(["function faucet() external"]);
+const HSK_WRITE_ABI = parseAbi(["function claim() external"]);
 
 const ERC20_ABI = [
   "function faucet() external",
@@ -51,6 +58,8 @@ export default function FaucetPage() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
+  const publicClient = usePublicClient();
+  const publicClient = usePublicClient();
 
   const [usdc, setUsdc] = useState<TokenFaucetState>(defaultToken);
   const [usdt, setUsdt] = useState<TokenFaucetState>(defaultToken);
@@ -93,22 +102,17 @@ export default function FaucetPage() {
     if (address) loadBalances(address);
   }, [address, loadBalances]);
 
-  const getWriteSigner = useCallback(async () => {
-    if (!walletClient) throw new Error("Wallet not connected");
-    const { account, chain, transport } = walletClient;
-    const provider = new ethers.BrowserProvider(transport as ethers.Eip1193Provider, { chainId: chain.id, name: chain.name });
-    return provider.getSigner(account.address);
-  }, [walletClient]);
-
   const claimErc20 = async (contractAddr: string, setter: React.Dispatch<React.SetStateAction<TokenFaucetState>>) => {
-    if (!address) return;
+    if (!address || !walletClient || !publicClient) return;
     setter((s) => ({ ...s, status: "loading", message: "Sending transaction…" }));
     try {
-      const signer = await getWriteSigner();
-      const c = new ethers.Contract(contractAddr, ERC20_ABI, signer);
-      const tx = await c.faucet();
+      const hash = await walletClient.writeContract({
+        address: contractAddr.trim() as `0x${string}`,
+        abi: ERC20_WRITE_ABI,
+        functionName: "faucet",
+      });
       setter((s) => ({ ...s, message: "Waiting for confirmation…" }));
-      await tx.wait();
+      await publicClient.waitForTransactionReceipt({ hash });
       setter((s) => ({ ...s, status: "success", message: "Claimed successfully!" }));
       await loadBalances(address);
     } catch (e: unknown) {
@@ -117,14 +121,16 @@ export default function FaucetPage() {
   };
 
   const claimHsk = async () => {
-    if (!address || !hskFaucetAddress) return;
+    if (!address || !hskFaucetAddress || !walletClient || !publicClient) return;
     setHsk((s) => ({ ...s, status: "loading", message: "Sending transaction…" }));
     try {
-      const signer = await getWriteSigner();
-      const fc = new ethers.Contract(hskFaucetAddress, HSK_FAUCET_ABI, signer);
-      const tx = await fc.claim();
+      const hash = await walletClient.writeContract({
+        address: hskFaucetAddress.trim() as `0x${string}`,
+        abi: HSK_WRITE_ABI,
+        functionName: "claim",
+      });
       setHsk((s) => ({ ...s, message: "Waiting for confirmation…" }));
-      await tx.wait();
+      await publicClient.waitForTransactionReceipt({ hash });
       setHsk((s) => ({ ...s, status: "success", message: "Claimed successfully!" }));
       await loadBalances(address);
     } catch (e: unknown) {

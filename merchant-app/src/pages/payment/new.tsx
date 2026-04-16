@@ -19,8 +19,8 @@ import {
 // viem signTypedData which does NOT attempt ENS resolution for address fields.
 const TOKENS = [
   { label: "HSK", address: "0x0000000000000000000000000000000000000000" as `0x${string}` },
-  { label: "USDC", address: (process.env.NEXT_PUBLIC_USDC_ADDRESS || "0x0000000000000000000000000000000000000000") as `0x${string}` },
-  { label: "USDT", address: (process.env.NEXT_PUBLIC_USDT_ADDRESS || "0x0000000000000000000000000000000000000000") as `0x${string}` },
+  { label: "USDC", address: ((process.env.NEXT_PUBLIC_USDC_ADDRESS || "").trim() || "0x0000000000000000000000000000000000000000") as `0x${string}` },
+  { label: "USDT", address: ((process.env.NEXT_PUBLIC_USDT_ADDRESS || "").trim() || "0x0000000000000000000000000000000000000000") as `0x${string}` },
 ].filter((t) => t.address !== "0x0000000000000000000000000000000000000000" || t.label === "HSK");
 
 export default function NewPayment() {
@@ -71,7 +71,7 @@ export default function NewPayment() {
         description.slice(0, 31) || "PAYMENT"
       ) as `0x${string}`;
       const chainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 133);
-      const contractAddress = process.env.NEXT_PUBLIC_ESCROW_ADDRESS || "";
+      const contractAddress = (process.env.NEXT_PUBLIC_ESCROW_ADDRESS || "").trim();
       if (!contractAddress) throw new Error("NEXT_PUBLIC_ESCROW_ADDRESS is not configured.");
 
       const intent: PaymentIntentData = {
