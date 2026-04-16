@@ -7,9 +7,7 @@ import { ethers } from "ethers";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount, useWalletClient, usePublicClient } from "wagmi";
 import { parseAbi } from "viem";
-
-const ERC20_WRITE_ABI = parseAbi(["function faucet() external"]);
-const HSK_WRITE_ABI = parseAbi(["function claim() external"]);
+import { getSupportedTokens, normalizeAddress } from "../lib/chain";
 
 const ERC20_WRITE_ABI = parseAbi(["function faucet() external"]);
 const HSK_WRITE_ABI = parseAbi(["function claim() external"]);
@@ -59,15 +57,18 @@ export default function FaucetPage() {
   const { address, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
-  const publicClient = usePublicClient();
 
   const [usdc, setUsdc] = useState<TokenFaucetState>(defaultToken);
   const [usdt, setUsdt] = useState<TokenFaucetState>(defaultToken);
   const [hsk, setHsk] = useState<HskState>(defaultHsk);
 
-  const usdcAddress = process.env.NEXT_PUBLIC_USDC_ADDRESS || "";
-  const usdtAddress = process.env.NEXT_PUBLIC_USDT_ADDRESS || "";
-  const hskFaucetAddress = process.env.NEXT_PUBLIC_HSK_FAUCET_ADDRESS || "";
+  const configuredTokens = getSupportedTokens();
+  const connectedAddress = normalizeAddress(address, { allowZeroAddress: false });
+  const usdcAddress = configuredTokens.find((token) => token.label === "USDC")?.address ?? null;
+  const usdtAddress = configuredTokens.find((token) => token.label === "USDT")?.address ?? null;
+  const hskFaucetAddress = normalizeAddress(process.env.NEXT_PUBLIC_HSK_FAUCET_ADDRESS, {
+    allowZeroAddress: false,
+  });
 
   const getReadProvider = useCallback(() => {
     return new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_URL || "https://testnet.hsk.xyz");
@@ -99,40 +100,40 @@ export default function FaucetPage() {
   );
 
   useEffect(() => {
-    if (address) loadBalances(address);
-  }, [address, loadBalances]);
+    if (connectedAddress) loadBalances(connectedAddress);
+  }, [connectedAddress, loadBalances]);
 
-  const claimErc20 = async (contractAddr: string, setter: React.Dispatch<React.SetStateAction<TokenFaucetState>>) => {
-    if (!address || !walletClient || !publicClient) return;
+  const claimErc20 = async (contractAddr: `0x${string}`, setter: React.Dispatch<React.SetStateAction<TokenFaucetState>>) => {
+    if (!connectedAddress || !walletClient || !publicClient) return;
     setter((s) => ({ ...s, status: "loading", message: "Sending transaction…" }));
     try {
       const hash = await walletClient.writeContract({
-        address: contractAddr.trim() as `0x${string}`,
+        address: contractAddr,
         abi: ERC20_WRITE_ABI,
         functionName: "faucet",
       });
       setter((s) => ({ ...s, message: "Waiting for confirmation…" }));
       await publicClient.waitForTransactionReceipt({ hash });
       setter((s) => ({ ...s, status: "success", message: "Claimed successfully!" }));
-      await loadBalances(address);
+      await loadBalances(connectedAddress);
     } catch (e: unknown) {
       setter((s) => ({ ...s, status: "error", message: e instanceof Error ? e.message.split("(")[0].trim() : "Failed" }));
     }
   };
 
   const claimHsk = async () => {
-    if (!address || !hskFaucetAddress || !walletClient || !publicClient) return;
+    if (!connectedAddress || !hskFaucetAddress || !walletClient || !publicClient) return;
     setHsk((s) => ({ ...s, status: "loading", message: "Sending transaction…" }));
     try {
       const hash = await walletClient.writeContract({
-        address: hskFaucetAddress.trim() as `0x${string}`,
+        address: hskFaucetAddress,
         abi: HSK_WRITE_ABI,
         functionName: "claim",
       });
       setHsk((s) => ({ ...s, message: "Waiting for confirmation…" }));
       await publicClient.waitForTransactionReceipt({ hash });
       setHsk((s) => ({ ...s, status: "success", message: "Claimed successfully!" }));
-      await loadBalances(address);
+      await loadBalances(connectedAddress);
     } catch (e: unknown) {
       setHsk((s) => ({ ...s, status: "error", message: e instanceof Error ? e.message.split("(")[0].trim() : "Failed" }));
     }

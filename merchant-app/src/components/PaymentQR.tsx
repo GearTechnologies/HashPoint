@@ -3,6 +3,7 @@
 import React from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { PaymentIntentData } from "@hashpoint/sdk";
+import { formatTokenAmount, getTokenByAddress } from "../lib/chain";
 
 interface PaymentQRProps {
   intent: PaymentIntentData;
@@ -11,15 +12,13 @@ interface PaymentQRProps {
 }
 
 export function PaymentQR({ intent, qrPayload, merchantName }: PaymentQRProps) {
-  const amount = Number(intent.amount) / 1e18;
-  const tokenLabel = intent.token === "0x0000000000000000000000000000000000000000"
-    ? "HSK"
-    : "Token";
+  const token = getTokenByAddress(intent.token);
+  const amount = formatTokenAmount(intent.amount, intent.token);
 
   return (
     <div className="payment-qr">
       <div className="payment-qr__amount">
-        {amount.toFixed(4)} {tokenLabel}
+        {amount} {token.label}
       </div>
       {merchantName && (
         <div className="payment-qr__merchant">{merchantName}</div>

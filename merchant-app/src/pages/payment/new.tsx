@@ -8,6 +8,7 @@ import { useAccount, useWalletClient } from "wagmi";
 import { useConnectivity } from "../../hooks/useConnectivity";
 import { useSession } from "../../hooks/useSession";
 import { useSettlementQueue } from "../../hooks/useSettlementQueue";
+import { getSupportedTokens, normalizeAddress, parseTokenAmount, requireAddress } from "../../lib/chain";
 import {
   encodeQRPayload,
   HASHPOINT_DOMAIN_BASE,
@@ -15,13 +16,7 @@ import {
   type PaymentIntentData,
 } from "@hashpoint/sdk";
 
-// Always include all 3 tokens — no runtime filtering needed since we use
-// viem signTypedData which does NOT attempt ENS resolution for address fields.
-const TOKENS = [
-  { label: "HSK", address: "0x0000000000000000000000000000000000000000" as `0x${string}` },
-  { label: "USDC", address: ((process.env.NEXT_PUBLIC_USDC_ADDRESS || "").trim() || "0x0000000000000000000000000000000000000000") as `0x${string}` },
-  { label: "USDT", address: ((process.env.NEXT_PUBLIC_USDT_ADDRESS || "").trim() || "0x0000000000000000000000000000000000000000") as `0x${string}` },
-].filter((t) => t.address !== "0x0000000000000000000000000000000000000000" || t.label === "HSK");
+const TOKENS = getSupportedTokens();
 
 export default function NewPayment() {
   const router = useRouter();
@@ -65,18 +60,26 @@ export default function NewPayment() {
     setLoading(true);
     setError("");
     try {
-      const amountWei = ethers.parseEther(amount || "0");
+      const walletAddress = normalizeAddress(address, { allowZeroAddress: false });
+      if (!walletAddress) {
+        throw new Error("Connected wallet address is invalid.");
+      }
+
+      const amountWei = parseTokenAmount(amount || "0", token.address);
       const expiry = session.expiry;
       const merchantRef = ethers.encodeBytes32String(
         description.slice(0, 31) || "PAYMENT"
       ) as `0x${string}`;
       const chainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 133);
-      const contractAddress = (process.env.NEXT_PUBLIC_ESCROW_ADDRESS || "").trim();
-      if (!contractAddress) throw new Error("NEXT_PUBLIC_ESCROW_ADDRESS is not configured.");
+      const contractAddress = requireAddress(
+        process.env.NEXT_PUBLIC_ESCROW_ADDRESS,
+        "NEXT_PUBLIC_ESCROW_ADDRESS",
+        { allowZeroAddress: false }
+      );
 
       const intent: PaymentIntentData = {
-        merchant: address,
-        customer: address,
+        merchant: walletAddress,
+        customer: walletAddress,
         token: token.address,
         amount: amountWei,
         sessionId: session.sessionId,
@@ -96,8 +99,8 @@ export default function NewPayment() {
         types: PAYMENT_INTENT_TYPES as Parameters<typeof walletClient.signTypedData>[0]["types"],
         primaryType: "PaymentIntent",
         message: {
-          merchant: address,
-          customer: address,
+          merchant: walletAddress,
+          customer: walletAddress,
           token: token.address,
           amount: amountWei,
           sessionId: intent.sessionId,

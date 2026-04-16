@@ -14,7 +14,7 @@ import { Pool } from "pg";
 const PORT = process.env.PORT || 3001;
 const RPC_URL = process.env.HASHKEY_MAINNET_RPC || "https://mainnet.hsk.xyz";
 const RELAY_PRIVATE_KEY = process.env.RELAY_WALLET_PRIVATE_KEY || "";
-const ESCROW_ADDRESS = process.env.NEXT_PUBLIC_ESCROW_ADDRESS || "";
+const ESCROW_ADDRESS = (process.env.NEXT_PUBLIC_ESCROW_ADDRESS || "").trim();
 const DB_URL = process.env.DATABASE_URL || "";
 
 // Minimal ABI for the relay

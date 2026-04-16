@@ -3,6 +3,7 @@
 import React from "react";
 import { Virtuoso } from "react-virtuoso";
 import { QueuedIntent } from "@hashpoint/sdk";
+import { formatTokenAmount, getTokenByAddress } from "../lib/chain";
 
 const STATUS_COLORS: Record<string, string> = {
   pending: "#6B778C",
@@ -33,11 +34,8 @@ export function TransactionList({ transactions }: TransactionListProps) {
 
 function TransactionRow({ tx }: { tx: QueuedIntent }) {
   const [expanded, setExpanded] = React.useState(false);
-  const amount = Number(tx.intent.amount) / 1e18;
-  const tokenLabel =
-    tx.intent.token === "0x0000000000000000000000000000000000000000"
-      ? "HSK"
-      : tx.intent.token.slice(0, 8) + "...";
+  const token = getTokenByAddress(tx.intent.token);
+  const amount = formatTokenAmount(tx.intent.amount, tx.intent.token);
 
   return (
     <div
@@ -61,7 +59,7 @@ function TransactionRow({ tx }: { tx: QueuedIntent }) {
             {tx.status.toUpperCase()}
           </span>
           <span style={{ fontWeight: 600 }}>
-            {amount.toFixed(4)} {tokenLabel}
+            {amount} {token.label}
           </span>
         </div>
         <div style={{ fontSize: "12px", color: "#6B778C" }}>
