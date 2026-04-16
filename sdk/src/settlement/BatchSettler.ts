@@ -104,8 +104,8 @@ export class BatchSettler {
 
     let txHash = "";
     try {
-      const tx = await this.escrowContract
-        .connect(this.signer)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const tx = await (this.escrowContract.connect(this.signer) as any)
         .settleBatch(intentStructs, sigs, proofs);
       txHash = tx.hash;
       const receipt = await tx.wait();

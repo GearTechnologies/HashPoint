@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: hashpoint-backend
+    runtime: node
+    region: oregon
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: HASHKEY_MAINNET_RPC
+        value: https://mainnet.hsk.xyz
+      - key: HASHKEY_TESTNET_RPC
+        value: https://testnet.hsk.xyz
+      - key: RELAY_WALLET_PRIVATE_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_ESCROW_ADDRESS
+        value: 0x21ab93a1494b1B0E3eafdB24E3703F12F8AfeC20
+      - key: NEXT_PUBLIC_NONCE_REGISTRY_ADDRESS
+        value: 0xC5a2A6Dfc78DAcB4AAF474124Cb7f56360F23430
+      - key: NEXT_PUBLIC_MERCHANT_REGISTRY_ADDRESS
+        value: 0x461D7501ae9493b4678C60F97A903fc51069152A
+      - key: NEXT_PUBLIC_CHAIN_ID
+        value: "133"
+      - key: INDEXER_FROM_BLOCK
+        value: "0"

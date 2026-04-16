@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "framework": "nextjs",
+  "installCommand": "npm install",
+  "buildCommand": "npm run build -w sdk && npm run build -w merchant-app",
+  "outputDirectory": "merchant-app/.next",
+  "devCommand": "npm run dev -w merchant-app"
+}

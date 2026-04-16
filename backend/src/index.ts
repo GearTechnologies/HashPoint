@@ -1,5 +1,8 @@
 import * as dotenv from "dotenv";
-dotenv.config();
+import path from "path";
+// In local dev the .env lives at the workspace root; in production (Render)
+// env vars are injected directly so this is a no-op when the file is absent.
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 import http from "http";
 import { ethers } from "ethers";
@@ -48,7 +51,12 @@ async function main() {
     const db = new Pool({ connectionString: DB_URL });
     const indexer = new EventIndexer(provider, escrowContract, db);
     await indexer.initDb();
-    await indexer.syncHistorical();
+    const fromBlock = process.env.INDEXER_FROM_BLOCK
+      ? parseInt(process.env.INDEXER_FROM_BLOCK, 10)
+      : await provider.getBlockNumber();
+    indexer.syncHistorical(fromBlock).catch((err) =>
+      console.warn("Historical sync failed (non-fatal):", err.shortMessage ?? err.message)
+    );
     indexer.start();
   }
 

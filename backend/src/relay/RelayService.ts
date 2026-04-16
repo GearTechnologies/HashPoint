@@ -139,8 +139,8 @@ export class RelayService {
     });
 
     try {
-      const tx = await this.escrowContract
-        .connect(this.relaySigner)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const tx = await (this.escrowContract.connect(this.relaySigner) as any)
         .settleBatch(intentStructs, sigs, proofs);
       const receipt = await tx.wait();
       queued.forEach((qi) => {

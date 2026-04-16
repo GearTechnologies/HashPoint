@@ -74,11 +74,11 @@ export class EventIndexer {
   }
 
   /**
-   * Sync historical events from block 0 to current.
+   * Sync historical events from `fromBlock` to current.
    */
-  async syncHistorical(): Promise<void> {
+  async syncHistorical(fromBlock = 0): Promise<void> {
     const filter = this.escrowContract.filters.PaymentSettled();
-    const events = await this.escrowContract.queryFilter(filter, 0, "latest");
+    const events = await this.escrowContract.queryFilter(filter, fromBlock, "latest");
 
     for (const event of events) {
       await this._handlePaymentSettled(event as ethers.EventLog);

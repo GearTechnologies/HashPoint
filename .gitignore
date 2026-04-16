@@ -41,3 +41,4 @@ contracts/typechain-types/
 
 # Deployments (keep the directory, ignore network-specific files except examples)
 # contracts/deployments/*.json  # Keep these committed for reference
+.vercel
