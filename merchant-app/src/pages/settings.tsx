@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/router";
 
 export default function Settings() {
+  const router = useRouter();
   const [merchantName, setMerchantName] = useState(
     process.env.NEXT_PUBLIC_MERCHANT_NAME || ""
   );
@@ -22,7 +24,10 @@ export default function Settings() {
 
   return (
     <div style={{ maxWidth: 500, margin: "0 auto", padding: "16px" }}>
-      <h1>Settings</h1>
+      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+        <button onClick={() => router.back()} style={{ background: "none", border: "none", fontSize: "20px", cursor: "pointer", padding: "4px 8px" }}>←</button>
+        <h1 style={{ margin: 0 }}>Settings</h1>
+      </div>
 
       <section style={{ marginBottom: "24px" }}>
         <h2>Merchant Profile</h2>

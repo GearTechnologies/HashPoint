@@ -51,6 +51,11 @@ export default function QRDisplay() {
         textAlign: "center",
       }}
     >
+      {!confirmed && (
+        <div style={{ textAlign: "left", marginBottom: "16px" }}>
+          <button onClick={() => router.back()} style={{ background: "none", border: "none", fontSize: "20px", cursor: "pointer", padding: "4px 8px" }}>←</button>
+        </div>
+      )}
       {confirmed ? (
         <div style={{ fontSize: "64px", marginTop: "80px" }}>
           ✅ Payment Received

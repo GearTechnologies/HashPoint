@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/router";
 import { SessionStatus } from "../components/SessionStatus";
 import { useSession } from "../hooks/useSession";
 import { useConnectivity } from "../hooks/useConnectivity";
@@ -13,6 +14,7 @@ const DURATIONS = [
 ];
 
 export default function SessionPage() {
+  const router = useRouter();
   const { session, openSession, closeSession } = useSession();
   const { isOnline } = useConnectivity();
 
@@ -40,7 +42,10 @@ export default function SessionPage() {
 
   return (
     <div style={{ maxWidth: 500, margin: "0 auto", padding: "16px" }}>
-      <h1>Session Manager</h1>
+      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+        <button onClick={() => router.back()} style={{ background: "none", border: "none", fontSize: "20px", cursor: "pointer", padding: "4px 8px" }}>←</button>
+        <h1 style={{ margin: 0 }}>Session Manager</h1>
+      </div>
       <SessionStatus />
 
       {session ? (

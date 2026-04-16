@@ -3,25 +3,33 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { ethers } from "ethers";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAccount, useWalletClient } from "wagmi";
 import { useConnectivity } from "../../hooks/useConnectivity";
 import { useSession } from "../../hooks/useSession";
 import { useSettlementQueue } from "../../hooks/useSettlementQueue";
-import { createSignedPaymentIntent } from "@hashpoint/sdk";
+import {
+  encodeQRPayload,
+  HASHPOINT_DOMAIN_BASE,
+  PAYMENT_INTENT_TYPES,
+  type PaymentIntentData,
+} from "@hashpoint/sdk";
 
-// Filter out tokens whose env vars aren't set — an empty address string
-// triggers ENS resolution in ethers v6 signTypedData (address type).
-const ALL_TOKENS = [
-  { label: "HSK", address: "0x0000000000000000000000000000000000000000" },
-  { label: "USDC", address: process.env.NEXT_PUBLIC_USDC_ADDRESS || "" },
-  { label: "USDT", address: process.env.NEXT_PUBLIC_USDT_ADDRESS || "" },
-];
-const TOKENS = ALL_TOKENS.filter((t) => t.address.startsWith("0x") && t.address.length === 42);
+// Always include all 3 tokens — no runtime filtering needed since we use
+// viem signTypedData which does NOT attempt ENS resolution for address fields.
+const TOKENS = [
+  { label: "HSK", address: "0x0000000000000000000000000000000000000000" as `0x${string}` },
+  { label: "USDC", address: (process.env.NEXT_PUBLIC_USDC_ADDRESS || "0x0000000000000000000000000000000000000000") as `0x${string}` },
+  { label: "USDT", address: (process.env.NEXT_PUBLIC_USDT_ADDRESS || "0x0000000000000000000000000000000000000000") as `0x${string}` },
+].filter((t) => t.address !== "0x0000000000000000000000000000000000000000" || t.label === "HSK");
 
 export default function NewPayment() {
   const router = useRouter();
   const { isOnline } = useConnectivity();
   const { session, getNextNonce, getMerkleProof } = useSession();
   const { enqueue } = useSettlementQueue();
+  const { address, isConnected } = useAccount();
+  const { data: walletClient } = useWalletClient();
 
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
@@ -44,6 +52,10 @@ export default function NewPayment() {
       setError("No active session. Open a session first.");
       return;
     }
+    if (!isConnected || !address || !walletClient) {
+      setError("Please connect your wallet first.");
+      return;
+    }
     const nonce = getNextNonce();
     if (!nonce) {
       setError("No remaining nonce slots. Open a new session.");
@@ -53,37 +65,50 @@ export default function NewPayment() {
     setLoading(true);
     setError("");
     try {
-      // Get signer from wallet
-      if (!window.ethereum) throw new Error("No wallet found");
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const customer = await signer.getAddress();
-      const merchant = customer; // in real app: merchant address from config
-
       const amountWei = ethers.parseEther(amount || "0");
       const expiry = session.expiry;
       const merchantRef = ethers.encodeBytes32String(
         description.slice(0, 31) || "PAYMENT"
-      );
-      const chainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 31337);
+      ) as `0x${string}`;
+      const chainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 133);
       const contractAddress = process.env.NEXT_PUBLIC_ESCROW_ADDRESS || "";
+      if (!contractAddress) throw new Error("NEXT_PUBLIC_ESCROW_ADDRESS is not configured.");
 
-      const { intent, signature, qrPayload } = await createSignedPaymentIntent(
-        signer,
-        {
-          merchant,
-          customer,
+      const intent: PaymentIntentData = {
+        merchant: address,
+        customer: address,
+        token: token.address,
+        amount: amountWei,
+        sessionId: session.sessionId,
+        nonce,
+        expiry,
+        merchantRef,
+        chainId,
+      };
+
+      // Sign using viem walletClient — avoids ethers ENS resolution entirely
+      const signature = await walletClient.signTypedData({
+        domain: {
+          ...HASHPOINT_DOMAIN_BASE,
+          chainId,
+          verifyingContract: contractAddress as `0x${string}`,
+        },
+        types: PAYMENT_INTENT_TYPES as Parameters<typeof walletClient.signTypedData>[0]["types"],
+        primaryType: "PaymentIntent",
+        message: {
+          merchant: address,
+          customer: address,
           token: token.address,
           amount: amountWei,
-          sessionId: session.sessionId,
-          nonce,
-          expiry,
+          sessionId: intent.sessionId,
+          nonce: intent.nonce as `0x${string}`,
+          expiry: BigInt(expiry),
           merchantRef,
-          chainId,
+          chainId: BigInt(chainId),
         },
-        contractAddress
-      );
+      });
 
+      const qrPayload = encodeQRPayload(intent, signature);
       const merkleProof = getMerkleProof(nonce);
       const id = await enqueue(intent, signature, merkleProof);
 
@@ -99,6 +124,19 @@ export default function NewPayment() {
 
   return (
     <div style={{ maxWidth: 400, margin: "0 auto", padding: "16px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+        <button
+          onClick={() => router.back()}
+          style={{ background: "none", border: "none", fontSize: "20px", cursor: "pointer", padding: "4px 8px" }}
+        >
+          ←
+        </button>
+        <h1 style={{ margin: 0 }}>New Payment</h1>
+        <div style={{ marginLeft: "auto" }}>
+          <ConnectButton showBalance={false} accountStatus="address" chainStatus="none" />
+        </div>
+      </div>
+
       {!isOnline && (
         <div
           style={{
@@ -112,8 +150,6 @@ export default function NewPayment() {
           Offline mode — payment will be queued
         </div>
       )}
-
-      <h1>New Payment</h1>
 
       <div
         style={{
@@ -193,24 +229,30 @@ export default function NewPayment() {
         <div style={{ color: "#DE350B", marginBottom: "16px" }}>{error}</div>
       )}
 
-      <button
-        onClick={handleGenerate}
-        disabled={!amount || loading}
-        style={{
-          width: "100%",
-          padding: "16px",
-          backgroundColor: "#0052CC",
-          color: "white",
-          border: "none",
-          borderRadius: "8px",
-          fontSize: "18px",
-          fontWeight: 700,
-          cursor: "pointer",
-          opacity: !amount || loading ? 0.5 : 1,
-        }}
-      >
-        {loading ? "Generating..." : "Generate QR"}
-      </button>
+      {!isConnected ? (
+        <div style={{ textAlign: "center", padding: "16px" }}>
+          <ConnectButton label="Connect Wallet to Generate QR" />
+        </div>
+      ) : (
+        <button
+          onClick={handleGenerate}
+          disabled={!amount || loading}
+          style={{
+            width: "100%",
+            padding: "16px",
+            backgroundColor: "#0052CC",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+            fontSize: "18px",
+            fontWeight: 700,
+            cursor: "pointer",
+            opacity: !amount || loading ? 0.5 : 1,
+          }}
+        >
+          {loading ? "Generating..." : "Generate QR"}
+        </button>
+      )}
     </div>
   );
 }

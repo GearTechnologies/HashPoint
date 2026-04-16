@@ -1,11 +1,13 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/router";
 import { TransactionList } from "../components/TransactionList";
 import { useSettlementQueue } from "../hooks/useSettlementQueue";
 import { useConnectivity } from "../hooks/useConnectivity";
 
 export default function QueuePage() {
+  const router = useRouter();
   const { queue, refresh } = useSettlementQueue();
   const { isOnline } = useConnectivity();
 
@@ -16,7 +18,10 @@ export default function QueuePage() {
 
   return (
     <div style={{ maxWidth: 600, margin: "0 auto", padding: "16px" }}>
-      <h1>Settlement Queue</h1>
+      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+        <button onClick={() => router.back()} style={{ background: "none", border: "none", fontSize: "20px", cursor: "pointer", padding: "4px 8px" }}>←</button>
+        <h1 style={{ margin: 0 }}>Settlement Queue</h1>
+      </div>
 
       <div
         style={{
