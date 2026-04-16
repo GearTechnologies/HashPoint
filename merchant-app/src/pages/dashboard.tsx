@@ -85,6 +85,7 @@ export default function Dashboard() {
         <Link href="/dashboard">🏠 Home</Link>
         <Link href="/session">🔑 Session</Link>
         <Link href="/queue">📋 Queue</Link>
+        <Link href="/faucet">🚰 Faucet</Link>
         <Link href="/settings">⚙️ Settings</Link>
       </nav>
     </div>

@@ -8,11 +8,14 @@ import { useSession } from "../../hooks/useSession";
 import { useSettlementQueue } from "../../hooks/useSettlementQueue";
 import { createSignedPaymentIntent } from "@hashpoint/sdk";
 
-const TOKENS = [
+// Filter out tokens whose env vars aren't set — an empty address string
+// triggers ENS resolution in ethers v6 signTypedData (address type).
+const ALL_TOKENS = [
   { label: "HSK", address: "0x0000000000000000000000000000000000000000" },
   { label: "USDC", address: process.env.NEXT_PUBLIC_USDC_ADDRESS || "" },
   { label: "USDT", address: process.env.NEXT_PUBLIC_USDT_ADDRESS || "" },
 ];
+const TOKENS = ALL_TOKENS.filter((t) => t.address.startsWith("0x") && t.address.length === 42);
 
 export default function NewPayment() {
   const router = useRouter();
