@@ -12,13 +12,9 @@ export interface PaymentIntentData {
   chainId: number; // HashKey Chain ID
 }
 
-export const HASHPOINT_DOMAIN = {
+export const HASHPOINT_DOMAIN_BASE = {
   name: "HashPoint",
   version: "1",
-  // HashKey Chain mainnet chainId — update to 133 for testnet or 31337 for local Hardhat
-  // This must match the `chainId` set in `NEXT_PUBLIC_CHAIN_ID` and the deployed contract network.
-  chainId: 177, // HashKey Chain mainnet
-  verifyingContract: "", // HashPointEscrow deployed address
 };
 
 export const PAYMENT_INTENT_TYPES = {
@@ -44,7 +40,10 @@ export async function createSignedPaymentIntent(
   intent: PaymentIntentData,
   contractAddress: string
 ): Promise<{ intent: PaymentIntentData; signature: string; qrPayload: string }> {
-  const domain = { ...HASHPOINT_DOMAIN, verifyingContract: contractAddress };
+  if (!contractAddress || contractAddress === "0x") {
+    throw new Error("NEXT_PUBLIC_ESCROW_ADDRESS is not set. Check your environment configuration.");
+  }
+  const domain = { ...HASHPOINT_DOMAIN_BASE, chainId: intent.chainId, verifyingContract: contractAddress };
   const signature = await signer.signTypedData(domain, PAYMENT_INTENT_TYPES, {
     ...intent,
     amount: intent.amount.toString(),
@@ -70,6 +69,7 @@ export function encodeQRPayload(intent: PaymentIntentData, signature: string): s
     n: intent.nonce,
     e: intent.expiry,
     r: intent.merchantRef,
+    ch: intent.chainId,
     sig: signature,
   };
   return Buffer.from(JSON.stringify(payload)).toString("base64url");
@@ -90,7 +90,7 @@ export function decodeQRPayload(encoded: string): {
       nonce: payload.n,
       expiry: payload.e,
       merchantRef: payload.r,
-      chainId: HASHPOINT_DOMAIN.chainId,
+      chainId: Number(payload.ch ?? 133),
     },
     signature: payload.sig,
   };
@@ -106,7 +106,7 @@ export function verifyPaymentIntentOffline(
   contractAddress: string
 ): boolean {
   try {
-    const domain = { ...HASHPOINT_DOMAIN, verifyingContract: contractAddress };
+    const domain = { ...HASHPOINT_DOMAIN_BASE, chainId: intent.chainId, verifyingContract: contractAddress };
     const recovered = ethers.verifyTypedData(
       domain,
       PAYMENT_INTENT_TYPES,

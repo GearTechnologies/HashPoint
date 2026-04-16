@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import {
   PaymentIntentData,
-  HASHPOINT_DOMAIN,
+  HASHPOINT_DOMAIN_BASE,
   PAYMENT_INTENT_TYPES,
 } from "../offline/PaymentIntent";
 
@@ -20,7 +20,7 @@ export class IntentVerifier {
     contractAddress: string
   ): boolean {
     try {
-      const domain = { ...HASHPOINT_DOMAIN, verifyingContract: contractAddress };
+      const domain = { ...HASHPOINT_DOMAIN_BASE, chainId: intent.chainId, verifyingContract: contractAddress };
       const recovered = ethers.verifyTypedData(
         domain,
         PAYMENT_INTENT_TYPES,

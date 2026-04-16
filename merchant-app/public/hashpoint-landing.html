@@ -1,0 +1,1646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HashPoint — Offline-First Crypto Payments</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #0B1E3D;
+    --navy-mid: #162F56;
+    --blue: #1A56DB;
+    --blue-light: #E8F0FE;
+    --blue-mid: #4A7FE5;
+    --accent: #00C27C;
+    --accent-light: #E6FAF3;
+    --accent-dark: #007A4D;
+    --warm: #F8F6F2;
+    --warm-mid: #EDE9E0;
+    --ink: #0F1923;
+    --ink-mid: #3D4E5C;
+    --ink-light: #6B7C8D;
+    --border: #D8DCE4;
+    --white: #FFFFFF;
+    --serif: 'DM Serif Display', Georgia, serif;
+    --sans: 'DM Sans', system-ui, sans-serif;
+    --mono: 'DM Mono', 'Courier New', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--white);
+    color: var(--ink);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: inherit; text-decoration: none; }
+  img { display: block; max-width: 100%; }
+
+  .container {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(255,255,255,0.96);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(8px);
+  }
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-mark {
+    width: 32px;
+    height: 32px;
+    background: var(--navy);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .logo-mark svg { width: 18px; height: 18px; }
+  .logo-name {
+    font-family: var(--serif);
+    font-size: 20px;
+    color: var(--navy);
+    letter-spacing: -0.3px;
+  }
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    list-style: none;
+  }
+  .nav-links a {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--ink-mid);
+    transition: color 0.15s;
+  }
+  .nav-links a:hover { color: var(--navy); }
+  .nav-cta {
+    background: var(--navy);
+    color: var(--white) !important;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.15s;
+  }
+  .nav-cta:hover { background: var(--navy-mid) !important; color: var(--white) !important; }
+
+  /* ── HERO ── */
+  .hero {
+    background: var(--warm);
+    border-bottom: 1px solid var(--warm-mid);
+    padding: 100px 0 80px;
+    overflow: hidden;
+    position: relative;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: center;
+  }
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent-light);
+    color: var(--accent-dark);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+  }
+  .hero-eyebrow-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: 52px;
+    line-height: 1.12;
+    color: var(--navy);
+    letter-spacing: -1px;
+    margin-bottom: 20px;
+  }
+  .hero h1 em {
+    font-style: italic;
+    color: var(--blue);
+  }
+  .hero-sub {
+    font-size: 18px;
+    color: var(--ink-mid);
+    line-height: 1.6;
+    margin-bottom: 36px;
+    max-width: 480px;
+  }
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .btn-primary {
+    background: var(--navy);
+    color: var(--white);
+    padding: 13px 28px;
+    border-radius: 7px;
+    font-size: 15px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-primary:hover { background: var(--navy-mid); transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--navy);
+    padding: 12px 24px;
+    border-radius: 7px;
+    font-size: 15px;
+    font-weight: 500;
+    border: 1.5px solid var(--navy);
+    cursor: pointer;
+    transition: background 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-secondary:hover { background: var(--blue-light); }
+  .hero-trust {
+    margin-top: 40px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .trust-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--ink-light);
+  }
+  .trust-badge svg { width: 16px; height: 16px; color: var(--accent); }
+
+  /* Hero phone mockup */
+  .hero-visual {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+  }
+  .phone-frame {
+    width: 260px;
+    background: var(--navy);
+    border-radius: 32px;
+    padding: 12px;
+    box-shadow: 0 24px 48px rgba(11,30,61,0.18), 0 4px 8px rgba(11,30,61,0.08);
+    position: relative;
+  }
+  .phone-screen {
+    background: var(--white);
+    border-radius: 22px;
+    overflow: hidden;
+    font-size: 13px;
+  }
+  .phone-status {
+    background: var(--navy);
+    color: rgba(255,255,255,0.7);
+    font-size: 10px;
+    font-family: var(--mono);
+    padding: 8px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .status-dot-offline {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #E74C3C; display: inline-block;
+  }
+  .status-dot-online {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent); display: inline-block;
+  }
+  .phone-body { padding: 16px; }
+  .phone-merchant-name {
+    font-family: var(--serif);
+    font-size: 15px;
+    color: var(--navy);
+    margin-bottom: 4px;
+  }
+  .phone-location {
+    font-size: 11px;
+    color: var(--ink-light);
+    margin-bottom: 16px;
+  }
+  .phone-amount-label {
+    font-size: 11px;
+    color: var(--ink-light);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+  .phone-amount {
+    font-family: var(--serif);
+    font-size: 36px;
+    color: var(--navy);
+    margin-bottom: 16px;
+    line-height: 1;
+  }
+  .phone-qr-area {
+    background: var(--warm);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+  .qr-svg { width: 96px; height: 96px; }
+  .phone-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent-light);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 11px;
+    color: var(--accent-dark);
+    font-weight: 500;
+    margin-bottom: 10px;
+  }
+  .phone-badge-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+  .phone-queue {
+    background: #FFF8E1;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 11px;
+    color: #6B4F00;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .floating-card {
+    position: absolute;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  .floating-card-right {
+    right: -64px;
+    top: 60px;
+    min-width: 140px;
+  }
+  .floating-card-left {
+    left: -60px;
+    bottom: 80px;
+    min-width: 130px;
+  }
+  .fc-label { font-size: 10px; color: var(--ink-light); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+  .fc-value { font-weight: 500; color: var(--navy); font-size: 14px; }
+  .fc-sub { font-size: 10px; color: var(--accent); margin-top: 1px; }
+
+  /* ── STATS BAR ── */
+  .stats-bar {
+    background: var(--navy);
+    padding: 28px 0;
+  }
+  .stats-inner {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+  }
+  .stat-item {
+    text-align: center;
+    padding: 8px 16px;
+    border-right: 1px solid rgba(255,255,255,0.1);
+  }
+  .stat-item:last-child { border-right: none; }
+  .stat-num {
+    font-family: var(--serif);
+    font-size: 32px;
+    color: var(--white);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-num span { color: var(--accent); }
+  .stat-label {
+    font-size: 13px;
+    color: rgba(255,255,255,0.55);
+  }
+
+  /* ── SECTIONS ── */
+  section { padding: 88px 0; }
+  .section-eyebrow {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--blue);
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-family: var(--serif);
+    font-size: 40px;
+    color: var(--navy);
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+    margin-bottom: 16px;
+  }
+  .section-sub {
+    font-size: 17px;
+    color: var(--ink-mid);
+    max-width: 560px;
+    line-height: 1.65;
+  }
+  .section-header { margin-bottom: 56px; }
+  .section-header-center { text-align: center; }
+  .section-header-center .section-sub { margin: 0 auto; }
+
+  /* ── PROBLEM ── */
+  .problem { background: var(--warm); border-top: 1px solid var(--warm-mid); border-bottom: 1px solid var(--warm-mid); }
+  .problem-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .problem-card {
+    background: var(--white);
+    padding: 28px 28px 32px;
+  }
+  .problem-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .problem-icon svg { width: 20px; height: 20px; }
+  .problem-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--navy);
+    margin-bottom: 8px;
+  }
+  .problem-text {
+    font-size: 14px;
+    color: var(--ink-mid);
+    line-height: 1.6;
+  }
+
+  /* ── HOW IT WORKS ── */
+  .how-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 72px;
+    align-items: start;
+  }
+  .steps { display: flex; flex-direction: column; gap: 0; }
+  .step {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 20px;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .step:last-child { border-bottom: none; }
+  .step-num {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-light);
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .step.active .step-num {
+    background: var(--navy);
+    border-color: var(--navy);
+    color: var(--white);
+  }
+  .step-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--navy);
+    margin-bottom: 4px;
+    padding-top: 6px;
+  }
+  .step-text {
+    font-size: 14px;
+    color: var(--ink-mid);
+    line-height: 1.6;
+  }
+  .how-visual {
+    background: var(--warm);
+    border: 1px solid var(--warm-mid);
+    border-radius: 16px;
+    padding: 32px;
+    min-height: 420px;
+    position: relative;
+    overflow: hidden;
+  }
+  .diagram-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink-light);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 24px;
+  }
+
+  /* Flow diagram nodes */
+  .flow { display: flex; flex-direction: column; gap: 12px; }
+  .flow-node {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+  .flow-node-icon {
+    width: 28px; height: 28px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .flow-node-icon svg { width: 14px; height: 14px; }
+  .flow-node-title { font-weight: 500; color: var(--navy); font-size: 13px; }
+  .flow-node-sub { font-size: 11px; color: var(--ink-light); margin-top: 1px; }
+  .flow-arrow {
+    width: 1px;
+    height: 16px;
+    background: var(--border);
+    margin: 0 auto;
+    margin-left: 22px;
+  }
+  .flow-node.highlight {
+    background: var(--navy);
+    border-color: var(--navy);
+  }
+  .flow-node.highlight .flow-node-title { color: var(--white); }
+  .flow-node.highlight .flow-node-sub { color: rgba(255,255,255,0.6); }
+  .flow-tag {
+    margin-left: auto;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .tag-offline { background: #FEF3CD; color: #7A5000; }
+  .tag-online { background: var(--accent-light); color: var(--accent-dark); }
+
+  /* ── FEATURES ── */
+  .features { background: var(--white); }
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+  }
+  .feature-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    background: var(--white);
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .feature-card:hover {
+    border-color: var(--blue-mid);
+    transform: translateY(-2px);
+  }
+  .feature-icon {
+    width: 44px; height: 44px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 18px;
+  }
+  .feature-icon svg { width: 22px; height: 22px; }
+  .feature-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--navy);
+    margin-bottom: 8px;
+  }
+  .feature-text {
+    font-size: 14px;
+    color: var(--ink-mid);
+    line-height: 1.65;
+  }
+
+  /* ── TECH ── */
+  .tech { background: var(--warm); border-top: 1px solid var(--warm-mid); border-bottom: 1px solid var(--warm-mid); }
+  .tech-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: center;
+  }
+  .tech-stack { display: flex; flex-direction: column; gap: 16px; }
+  .tech-row {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 16px;
+    align-items: center;
+    padding: 16px 20px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .tech-layer {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink-light);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .tech-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .tech-pill {
+    font-size: 12px;
+    font-family: var(--mono);
+    background: var(--blue-light);
+    color: #0C447C;
+    padding: 3px 10px;
+    border-radius: 4px;
+  }
+  .tech-code-block {
+    background: var(--navy);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .code-header {
+    background: rgba(255,255,255,0.05);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .code-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .code-filename {
+    margin-left: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: rgba(255,255,255,0.45);
+  }
+  .code-body {
+    padding: 24px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.9;
+    color: rgba(255,255,255,0.8);
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .kw { color: #79B8FF; }
+  .fn { color: #B392F0; }
+  .str { color: #9ECE6A; }
+  .cm { color: rgba(255,255,255,0.3); }
+  .val { color: #F7C948; }
+  .ty { color: #FFAB70; }
+
+  /* ── USE CASES ── */
+  .usecases { background: var(--white); }
+  .use-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+  .use-card {
+    background: var(--warm);
+    border: 1px solid var(--warm-mid);
+    border-radius: 12px;
+    padding: 28px 22px;
+    text-align: center;
+  }
+  .use-icon {
+    width: 52px; height: 52px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+  }
+  .use-icon svg { width: 26px; height: 26px; }
+  .use-title { font-size: 15px; font-weight: 500; color: var(--navy); margin-bottom: 8px; }
+  .use-text { font-size: 13px; color: var(--ink-mid); line-height: 1.55; }
+  .use-region {
+    margin-top: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-light);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* ── COMPARISON ── */
+  .comparison { background: var(--warm); border-top: 1px solid var(--warm-mid); border-bottom: 1px solid var(--warm-mid); }
+  .compare-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--white);
+  }
+  table.compare {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .compare th {
+    padding: 16px 24px;
+    text-align: left;
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--ink-mid);
+    border-bottom: 1px solid var(--border);
+    background: var(--warm);
+  }
+  .compare th.highlight-col {
+    background: var(--blue-light);
+    color: #0C447C;
+  }
+  .compare td {
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    color: var(--ink-mid);
+    vertical-align: middle;
+  }
+  .compare tr:last-child td { border-bottom: none; }
+  .compare td:first-child { color: var(--navy); font-weight: 500; }
+  .compare td.highlight-col { background: rgba(232,240,254,0.35); }
+  .check { color: var(--accent); font-size: 16px; }
+  .cross { color: #E74C3C; font-size: 16px; }
+  .partial { color: var(--ink-light); }
+  .col-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .col-head-badge {
+    font-size: 10px;
+    background: var(--navy);
+    color: var(--white);
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+
+  /* ── TESTIMONIALS ── */
+  .testimonials { background: var(--white); }
+  .testimonial-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  .testimonial-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    background: var(--white);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .quote-mark {
+    font-family: var(--serif);
+    font-size: 48px;
+    color: var(--blue-mid);
+    line-height: 0.5;
+    margin-bottom: 8px;
+  }
+  .quote-text {
+    font-size: 15px;
+    color: var(--ink);
+    line-height: 1.65;
+    flex: 1;
+    font-style: italic;
+  }
+  .quote-author { display: flex; align-items: center; gap: 12px; }
+  .author-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 500;
+    flex-shrink: 0;
+  }
+  .author-name { font-size: 14px; font-weight: 500; color: var(--navy); }
+  .author-role { font-size: 12px; color: var(--ink-light); }
+
+  /* ── CTA ── */
+  .cta-section {
+    background: var(--navy);
+    padding: 96px 0;
+    text-align: center;
+  }
+  .cta-section h2 {
+    font-family: var(--serif);
+    font-size: 44px;
+    color: var(--white);
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+  }
+  .cta-section h2 em { font-style: italic; color: var(--accent); }
+  .cta-section p {
+    font-size: 18px;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 40px;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .cta-buttons { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+  .btn-cta-primary {
+    background: var(--accent);
+    color: var(--white);
+    padding: 14px 32px;
+    border-radius: 7px;
+    font-size: 15px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .btn-cta-primary:hover { background: var(--accent-dark); transform: translateY(-1px); }
+  .btn-cta-secondary {
+    background: rgba(255,255,255,0.08);
+    color: var(--white);
+    padding: 13px 28px;
+    border-radius: 7px;
+    font-size: 15px;
+    font-weight: 500;
+    border: 1px solid rgba(255,255,255,0.2);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.15s;
+  }
+  .btn-cta-secondary:hover { background: rgba(255,255,255,0.14); }
+  .cta-note {
+    margin-top: 24px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.35);
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    background: #060E1D;
+    padding: 56px 0 32px;
+  }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 48px;
+    margin-bottom: 48px;
+  }
+  .footer-brand p {
+    font-size: 14px;
+    color: rgba(255,255,255,0.45);
+    line-height: 1.65;
+    margin-top: 12px;
+    max-width: 280px;
+  }
+  .footer-col-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.35);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 16px;
+  }
+  .footer-links { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .footer-links a {
+    font-size: 14px;
+    color: rgba(255,255,255,0.55);
+    transition: color 0.15s;
+  }
+  .footer-links a:hover { color: rgba(255,255,255,0.9); }
+  .footer-bottom {
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding-top: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .footer-bottom p {
+    font-size: 13px;
+    color: rgba(255,255,255,0.25);
+  }
+  .footer-badges { display: flex; gap: 12px; }
+  .footer-badge {
+    font-size: 11px;
+    font-family: var(--mono);
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.4);
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up { animation: fadeUp 0.5s ease forwards; }
+  .fade-up-1 { animation-delay: 0.05s; opacity: 0; }
+  .fade-up-2 { animation-delay: 0.15s; opacity: 0; }
+  .fade-up-3 { animation-delay: 0.25s; opacity: 0; }
+  .fade-up-4 { animation-delay: 0.35s; opacity: 0; }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.8); }
+  }
+  .status-dot-online { animation: pulse-dot 2s ease-in-out infinite; }
+
+  /* responsive */
+  @media (max-width: 900px) {
+    .hero-grid, .how-grid, .tech-grid { grid-template-columns: 1fr; }
+    .hero-visual { display: none; }
+    .features-grid, .testimonial-grid { grid-template-columns: 1fr 1fr; }
+    .use-grid { grid-template-columns: 1fr 1fr; }
+    .stats-inner { grid-template-columns: 1fr 1fr; }
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+    .hero h1 { font-size: 38px; }
+    .section-title { font-size: 32px; }
+    .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="container">
+    <div class="nav-inner">
+      <div class="logo">
+        <div class="logo-mark">
+          <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="2" width="6" height="6" rx="1.5" fill="white"/>
+            <rect x="10" y="2" width="6" height="6" rx="1.5" fill="white" opacity="0.5"/>
+            <rect x="2" y="10" width="6" height="6" rx="1.5" fill="white" opacity="0.5"/>
+            <rect x="10" y="10" width="6" height="6" rx="1.5" fill="#00C27C"/>
+          </svg>
+        </div>
+        <span class="logo-name">HashPoint</span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="#how">How it works</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#tech">Technology</a></li>
+        <li><a href="#usecases">Use cases</a></li>
+        <li><a href="/dashboard" class="nav-cta">Get started</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-grid">
+      <div>
+        <div class="hero-eyebrow fade-up fade-up-1">
+          <span class="hero-eyebrow-dot"></span>
+          Built on HashKey Chain · PayFi Track
+        </div>
+        <h1 class="fade-up fade-up-2">Accept crypto <em>offline.</em><br>Settle when ready.</h1>
+        <p class="hero-sub fade-up fade-up-3">HashPoint lets merchants in low-connectivity markets accept crypto payments without internet. Signed intents queue locally and batch-settle on HashKey Chain automatically.</p>
+        <div class="hero-actions fade-up fade-up-4">
+          <a href="/dashboard" class="btn-primary">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2L14 8L8 14M2 8H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+           Merchant Dashboard
+          </a>
+          <a href="#how" class="btn-secondary">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.2"/><path d="M8 5v4l2.5 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+            See how it works
+          </a>
+        </div>
+        <div class="hero-trust">
+          <div class="trust-badge">
+            <svg viewBox="0 0 16 16" fill="none"><path d="M8 1.5L10 6h4.5L10.5 9l1.5 4.5L8 11l-4 2.5L5.5 9 1.5 6H6z" fill="#00C27C"/></svg>
+            EIP-712 signed intents
+          </div>
+          <div class="trust-badge">
+            <svg viewBox="0 0 16 16" fill="none"><path d="M8 1.5L10 6h4.5L10.5 9l1.5 4.5L8 11l-4 2.5L5.5 9 1.5 6H6z" fill="#00C27C"/></svg>
+            Merkle anti-double-spend
+          </div>
+          <div class="trust-badge">
+            <svg viewBox="0 0 16 16" fill="none"><path d="M8 1.5L10 6h4.5L10.5 9l1.5 4.5L8 11l-4 2.5L5.5 9 1.5 6H6z" fill="#00C27C"/></svg>
+            HSP protocol native
+          </div>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div style="position: relative;">
+          <div class="phone-frame">
+            <div class="phone-screen">
+              <div class="phone-status">
+                <span style="display:flex;align-items:center;gap:5px;"><span class="status-dot-offline"></span> Offline mode</span>
+                <span>Session 4/50</span>
+              </div>
+              <div class="phone-body">
+                <div class="phone-merchant-name">Lagos Market Store</div>
+                <div class="phone-location">Balogun Market, Lagos · NG</div>
+                <div class="phone-amount-label">Payment amount</div>
+                <div class="phone-amount">45.00 <span style="font-size:18px;color:#6B7C8D;">USDC</span></div>
+                <div class="phone-qr-area">
+                  <svg class="qr-svg" viewBox="0 0 96 96" fill="none">
+                    <rect width="96" height="96" fill="white"/>
+                    <rect x="8" y="8" width="28" height="28" rx="3" fill="#0B1E3D"/>
+                    <rect x="12" y="12" width="20" height="20" rx="1.5" fill="white"/>
+                    <rect x="15" y="15" width="14" height="14" rx="1" fill="#0B1E3D"/>
+                    <rect x="60" y="8" width="28" height="28" rx="3" fill="#0B1E3D"/>
+                    <rect x="64" y="12" width="20" height="20" rx="1.5" fill="white"/>
+                    <rect x="67" y="15" width="14" height="14" rx="1" fill="#0B1E3D"/>
+                    <rect x="8" y="60" width="28" height="28" rx="3" fill="#0B1E3D"/>
+                    <rect x="12" y="64" width="20" height="20" rx="1.5" fill="white"/>
+                    <rect x="15" y="67" width="14" height="14" rx="1" fill="#0B1E3D"/>
+                    <rect x="44" y="8" width="6" height="6" rx="1" fill="#0B1E3D"/>
+                    <rect x="52" y="8" width="6" height="6" rx="1" fill="#0B1E3D"/>
+                    <rect x="44" y="16" width="6" height="6" rx="1" fill="#0B1E3D"/>
+                    <rect x="8" y="44" width="6" height="6" rx="1" fill="#0B1E3D"/>
+                    <rect x="16" y="44" width="6" height="6" rx="1" fill="#0B1E3D"/>
+                    <rect x="8" y="52" width="6" height="6" rx="1" fill="#0B1E3D"/>
+                    <rect x="44" y="44" width="10" height="10" rx="2" fill="#00C27C"/>
+                    <rect x="56" y="44" width="6" height="6" rx="1" fill="#0B1E3D"/>
+                    <rect x="64" y="44" width="6" height="6" rx="1" fill="#0B1E3D"/>
+                    <rect x="72" y="44" width="6" height="6" rx="1" fill="#0B1E3D"/>
+                    <rect x="80" y="44" width="6" height="6" rx="1" fill="#0B1E3D"/>
+                    <rect x="44" y="56" width="6" height="6" rx="1" fill="#0B1E3D"/>
+                    <rect x="56" y="56" width="6" height="6" rx="1" fill="#0B1E3D"/>
+                    <rect x="44" y="64" width="10" height="10" rx="2" fill="#0B1E3D"/>
+                    <rect x="56" y="64" width="6" height="6" rx="1" fill="#0B1E3D"/>
+                    <rect x="64" y="64" width="6" height="6" rx="1" fill="#0B1E3D"/>
+                    <rect x="64" y="72" width="6" height="6" rx="1" fill="#0B1E3D"/>
+                    <rect x="72" y="72" width="14" height="6" rx="1" fill="#0B1E3D"/>
+                    <rect x="72" y="56" width="6" height="6" rx="1" fill="#0B1E3D"/>
+                    <rect x="80" y="56" width="6" height="6" rx="1" fill="#0B1E3D"/>
+                    <rect x="80" y="64" width="6" height="6" rx="1" fill="#0B1E3D"/>
+                  </svg>
+                </div>
+                <div class="phone-badge">
+                  <span class="phone-badge-dot"></span>
+                  Signed offline · Ref #HP-2847
+                </div>
+                <div class="phone-queue">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="#6B4F00" stroke-width="1"/><path d="M6 3.5V6l1.5 1" stroke="#6B4F00" stroke-width="1" stroke-linecap="round"/></svg>
+                  3 intents queued · auto-settles on sync
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="floating-card floating-card-right">
+            <div class="fc-label">Batch settled</div>
+            <div class="fc-value">3 payments</div>
+            <div class="fc-sub">137.50 USDC · confirmed</div>
+          </div>
+          <div class="floating-card floating-card-left">
+            <div class="fc-label">Queue status</div>
+            <div class="fc-value">46 nonces left</div>
+            <div class="fc-sub">Session expires 6h</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="container">
+    <div class="stats-inner">
+      <div class="stat-item">
+        <div class="stat-num">4.2<span>B</span></div>
+        <div class="stat-label">People without reliable internet</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">&lt;2<span>s</span></div>
+        <div class="stat-label">Offline payment confirmation</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">50<span>×</span></div>
+        <div class="stat-label">Max intents per batch settlement</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">0<span>%</span></div>
+        <div class="stat-label">Double-spend risk via Merkle proofs</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROBLEM -->
+<section class="problem">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-eyebrow">The problem</div>
+      <h2 class="section-title">Crypto payments assume connectivity.<br>The world doesn't.</h2>
+      <p class="section-sub">Every crypto payment system today requires an active internet connection to function. That excludes billions of merchants and customers across emerging markets.</p>
+    </div>
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="problem-icon" style="background:#FEF3CD;">
+          <svg viewBox="0 0 20 20" fill="none"><path d="M10 2C5.58 2 2 5.58 2 10s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm.5-9.5H9v5l4.25 2.55.75-1.23-3.5-2.07V6.5z" fill="#7A5000"/></svg>
+        </div>
+        <div class="problem-title">Always-on connectivity required</div>
+        <div class="problem-text">Traditional crypto wallets and payment terminals need a live RPC connection to sign, broadcast, and confirm every transaction in real time.</div>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon" style="background:#FFE8E8;">
+          <svg viewBox="0 0 20 20" fill="none"><path d="M10 1.5L2 6v8l8 4.5 8-4.5V6L10 1.5zm0 1.94L16.5 7 10 10.31 3.5 7 10 3.44zM3 8.35l6.5 3.65v6L3 14.3V8.35zm8 9.65v-6L17 8.35V14.3l-6 3.7z" fill="#A32D2D"/></svg>
+        </div>
+        <div class="problem-title">$5.5T market locked out</div>
+        <div class="problem-text">Street markets in Lagos, rural traders in Southeast Asia, and mobile vendors across Africa cannot adopt crypto because their connectivity is intermittent.</div>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon" style="background:#E8F0FE;">
+          <svg viewBox="0 0 20 20" fill="none"><path d="M17 3H3a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zm0 12H3V5h14v10zm-2-2H5v-2h10v2zm0-4H5V7h10v2z" fill="#0C447C"/></svg>
+        </div>
+        <div class="problem-title">No offline-safe alternative</div>
+        <div class="problem-text">Existing offline workarounds — paper wallets, hardware signers — offer no fraud protection, no receipt trail, and no path to on-chain settlement.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-eyebrow">How it works</div>
+      <h2 class="section-title">Four steps. Zero internet required at point of sale.</h2>
+    </div>
+    <div class="how-grid">
+      <div class="steps">
+        <div class="step active">
+          <div class="step-num">1</div>
+          <div>
+            <div class="step-title">Merchant opens an offline session</div>
+            <div class="step-text">Before going offline, the merchant commits a Merkle root of pre-generated nonces to the NonceRegistry contract on HashKey Chain. This creates a cryptographic session with up to 1,000 payment slots.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div>
+            <div class="step-title">Customer scans QR and signs offline</div>
+            <div class="step-text">The customer's wallet scans the merchant's QR code and signs a PaymentIntent using EIP-712 typed data — entirely offline. No blockchain call is made. The signature is verified locally by the merchant device.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div>
+            <div class="step-title">Intents queue in local storage</div>
+            <div class="step-text">Signed intents persist in IndexedDB across app restarts. The merchant continues accepting payments. Each intent consumes one pre-committed nonce, making double-spend mathematically impossible.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div>
+            <div class="step-title">Connectivity returns — auto batch settlement</div>
+            <div class="step-text">When the device reconnects, BatchSettler submits all queued intents in a single transaction to HashPointEscrow on HashKey Chain. Funds transfer atomically. HSP receipts are emitted for every payment.</div>
+          </div>
+        </div>
+      </div>
+      <div class="how-visual">
+        <div class="diagram-title">Payment flow</div>
+        <div class="flow">
+          <div class="flow-node" style="border-color:#0B1E3D;background:#F0F4FF;">
+            <div class="flow-node-icon" style="background:#E8F0FE;">
+              <svg viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="12" rx="2" stroke="#0C447C" stroke-width="1.2"/><path d="M4 7h6M4 4.5h6M4 9.5h3" stroke="#0C447C" stroke-width="1.2" stroke-linecap="round"/></svg>
+            </div>
+            <div>
+              <div class="flow-node-title">NonceRegistry.openSession()</div>
+              <div class="flow-node-sub">Commits Merkle root · requires internet</div>
+            </div>
+            <span class="flow-tag tag-online">online</span>
+          </div>
+          <div class="flow-arrow"></div>
+          <div class="flow-node">
+            <div class="flow-node-icon" style="background:#FEF3CD;">
+              <svg viewBox="0 0 14 14" fill="none"><rect x="2" y="3" width="10" height="8" rx="1.5" stroke="#7A5000" stroke-width="1.2"/><path d="M5 7l2 2 2-3" stroke="#7A5000" stroke-width="1.2" stroke-linecap="round"/></svg>
+            </div>
+            <div>
+              <div class="flow-node-title">Customer signs PaymentIntent</div>
+              <div class="flow-node-sub">EIP-712 · verified locally · no RPC</div>
+            </div>
+            <span class="flow-tag tag-offline">offline</span>
+          </div>
+          <div class="flow-arrow"></div>
+          <div class="flow-node">
+            <div class="flow-node-icon" style="background:#FEF3CD;">
+              <svg viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="#7A5000" stroke-width="1.4" stroke-linecap="round"/></svg>
+            </div>
+            <div>
+              <div class="flow-node-title">IntentQueue stores signed data</div>
+              <div class="flow-node-sub">IndexedDB · survives app restarts</div>
+            </div>
+            <span class="flow-tag tag-offline">offline</span>
+          </div>
+          <div class="flow-arrow"></div>
+          <div class="flow-node highlight">
+            <div class="flow-node-icon" style="background:rgba(255,255,255,0.12);">
+              <svg viewBox="0 0 14 14" fill="none"><path d="M2 7a5 5 0 1010 0A5 5 0 002 7zm5-2v4m-2-2h4" stroke="white" stroke-width="1.2" stroke-linecap="round"/></svg>
+            </div>
+            <div>
+              <div class="flow-node-title">BatchSettler.settleBatch()</div>
+              <div class="flow-node-sub">Up to 50 intents · single tx</div>
+            </div>
+            <span class="flow-tag tag-online" style="background:rgba(0,194,124,0.2);color:#7FFFD4;">online</span>
+          </div>
+          <div class="flow-arrow" style="background:rgba(255,255,255,0.2);margin-left:22px;"></div>
+          <div class="flow-node">
+            <div class="flow-node-icon" style="background:#E6FAF3;">
+              <svg viewBox="0 0 14 14" fill="none"><path d="M7 1.5l1.5 3.5H13L9.5 7.5l1.5 4L7 9.5 3 11.5l1.5-4L1 5h4.5z" fill="#007A4D"/></svg>
+            </div>
+            <div>
+              <div class="flow-node-title">HSP receipts emitted · funds settled</div>
+              <div class="flow-node-sub">HashKey Chain · atomic settlement</div>
+            </div>
+            <span class="flow-tag tag-online">confirmed</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features" style="background:#F8F6F2;border-top:1px solid #EDE9E0;">
+  <div class="container">
+    <div class="section-header section-header-center">
+      <div class="section-eyebrow">Features</div>
+      <h2 class="section-title">Everything a merchant needs</h2>
+      <p class="section-sub">HashPoint is a complete stack — from cryptographic session management to PWA merchant terminal to gas-efficient batch settlement.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon" style="background:#E8F0FE;">
+          <svg viewBox="0 0 22 22" fill="none"><rect x="2" y="2" width="18" height="18" rx="3" stroke="#185FA5" stroke-width="1.3"/><path d="M7 11l3 3 5-6" stroke="#185FA5" stroke-width="1.3" stroke-linecap="round"/></svg>
+        </div>
+        <div class="feature-title">Merkle anti-double-spend</div>
+        <div class="feature-text">Before going offline, merchants commit a Merkle root of pre-generated nonces to the NonceRegistry contract. Each payment consumes one nonce provably, making replay attacks impossible even with no real-time chain access.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:#E6FAF3;">
+          <svg viewBox="0 0 22 22" fill="none"><path d="M11 2L4 5.5v5C4 14.28 7.13 18.07 11 19c3.87-.93 7-4.72 7-8.5v-5L11 2z" stroke="#007A4D" stroke-width="1.3" fill="none"/><path d="M8 11l2.5 2.5 4-4.5" stroke="#007A4D" stroke-width="1.3" stroke-linecap="round"/></svg>
+        </div>
+        <div class="feature-title">EIP-712 offline signing</div>
+        <div class="feature-text">PaymentIntents are structured as EIP-712 typed data. Customers sign with any compatible wallet — no internet required. Merchants verify the signature locally in milliseconds before accepting payment.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:#FAEEDA;">
+          <svg viewBox="0 0 22 22" fill="none"><path d="M4 11h14M4 7h14M4 15h8" stroke="#854F0B" stroke-width="1.3" stroke-linecap="round"/></svg>
+        </div>
+        <div class="feature-title">Persistent intent queue</div>
+        <div class="feature-text">All signed intents are stored in IndexedDB, surviving app restarts, device reboots, and extended offline periods. Nothing is lost. Intents automatically submit when connectivity returns.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:#EEEDFE;">
+          <svg viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="8" stroke="#534AB7" stroke-width="1.3"/><path d="M8 11l2 2 4-4" stroke="#534AB7" stroke-width="1.3" stroke-linecap="round"/></svg>
+        </div>
+        <div class="feature-title">HSP-native settlement</div>
+        <div class="feature-text">HashPoint uses HSP (HashKey Settlement Protocol) as the payment messaging layer. Every settlement emits HSP PAYMENT_REQUEST, PAYMENT_CONFIRMATION, and PAYMENT_RECEIPT messages — fully indexed and composable.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:#FFE8E8;">
+          <svg viewBox="0 0 22 22" fill="none"><path d="M11 3v4M11 15v4M3 11h4M15 11h4M5.6 5.6l2.83 2.83M13.57 13.57l2.83 2.83M5.6 16.4l2.83-2.83M13.57 8.43l2.83-2.83" stroke="#A32D2D" stroke-width="1.3" stroke-linecap="round"/></svg>
+        </div>
+        <div class="feature-title">Gas relay service</div>
+        <div class="feature-text">Merchants who lack ETH for gas can delegate settlement to the HashPoint relay. The relay batches intents from multiple merchants, deducts a 0.05% relay fee, and submits on their behalf — no gas wallet needed.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:#E6FAF3;">
+          <svg viewBox="0 0 22 22" fill="none"><rect x="3" y="6" width="16" height="12" rx="2" stroke="#007A4D" stroke-width="1.3"/><path d="M3 10h16" stroke="#007A4D" stroke-width="1.3"/><path d="M7 14h2M12 14h3" stroke="#007A4D" stroke-width="1.3" stroke-linecap="round"/></svg>
+        </div>
+        <div class="feature-title">PWA merchant terminal</div>
+        <div class="feature-text">A Progressive Web App that runs on any Android phone. Works offline. Installable with one tap. Session management, QR payment generation, settlement queue, and real-time sync status — all in a single app.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TECH -->
+<section class="tech" id="tech">
+  <div class="container">
+    <div class="tech-grid">
+      <div>
+        <div class="section-eyebrow">Technology</div>
+        <h2 class="section-title">Built for composability and security</h2>
+        <p class="section-sub" style="margin-bottom:40px;">HashPoint is a layered protocol — each component can be used independently. Integrate just the oracle, just the intent queue, or the full stack.</p>
+        <div class="tech-stack">
+          <div class="tech-row">
+            <div class="tech-layer">Blockchain</div>
+            <div class="tech-pills">
+              <span class="tech-pill">HashKey Chain</span>
+              <span class="tech-pill">Solidity 0.8.20</span>
+              <span class="tech-pill">OpenZeppelin</span>
+            </div>
+          </div>
+          <div class="tech-row">
+            <div class="tech-layer">Protocol</div>
+            <div class="tech-pills">
+              <span class="tech-pill">HSP</span>
+              <span class="tech-pill">EIP-712</span>
+              <span class="tech-pill">MerkleTree</span>
+            </div>
+          </div>
+          <div class="tech-row">
+            <div class="tech-layer">SDK</div>
+            <div class="tech-pills">
+              <span class="tech-pill">TypeScript</span>
+              <span class="tech-pill">ethers v6</span>
+              <span class="tech-pill">IndexedDB (idb)</span>
+            </div>
+          </div>
+          <div class="tech-row">
+            <div class="tech-layer">Frontend</div>
+            <div class="tech-pills">
+              <span class="tech-pill">Next.js 14</span>
+              <span class="tech-pill">wagmi v2</span>
+              <span class="tech-pill">PWA / Workbox</span>
+            </div>
+          </div>
+          <div class="tech-row">
+            <div class="tech-layer">Backend</div>
+            <div class="tech-pills">
+              <span class="tech-pill">Node.js relay</span>
+              <span class="tech-pill">PostgreSQL</span>
+              <span class="tech-pill">WebSocket events</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tech-code-block">
+        <div class="code-header">
+          <div class="code-dot" style="background:#FF5F57;"></div>
+          <div class="code-dot" style="background:#FFBD2E;"></div>
+          <div class="code-dot" style="background:#28C840;"></div>
+          <span class="code-filename">PaymentIntent.ts</span>
+        </div>
+        <div class="code-body"><span class="cm">// Sign a payment intent offline — no RPC needed</span>
+<span class="kw">export async function</span> <span class="fn">createSignedIntent</span>(
+  signer<span class="ty">: ethers.Signer</span>,
+  intent<span class="ty">: PaymentIntentData</span>,
+  contractAddress<span class="ty">: string</span>
+)<span class="ty">: Promise&lt;SignedIntent&gt;</span> {
+
+  <span class="kw">const</span> domain = {
+    name: <span class="str">"HashPoint"</span>,
+    version: <span class="str">"1"</span>,
+    chainId: <span class="val">177</span>, <span class="cm">// HashKey Chain</span>
+    verifyingContract: contractAddress
+  }
+
+  <span class="cm">// EIP-712 typed signature — fully offline</span>
+  <span class="kw">const</span> signature = <span class="kw">await</span> signer.<span class="fn">signTypedData</span>(
+    domain,
+    PAYMENT_INTENT_TYPES,
+    { ...intent, amount: intent.amount.<span class="fn">toString</span>() }
+  )
+
+  <span class="cm">// Encode as QR payload (base64url)</span>
+  <span class="kw">const</span> qrPayload = <span class="fn">encodeQRPayload</span>(intent, signature)
+
+  <span class="kw">return</span> { intent, signature, qrPayload }
+}
+
+<span class="cm">// Verify signature without any network call</span>
+<span class="kw">export function</span> <span class="fn">verifyOffline</span>(
+  intent<span class="ty">: PaymentIntentData</span>,
+  signature<span class="ty">: string</span>
+)<span class="ty">: boolean</span> {
+  <span class="kw">const</span> recovered = ethers.<span class="fn">verifyTypedData</span>(
+    domain, PAYMENT_INTENT_TYPES, intent, signature
+  )
+  <span class="kw">return</span> recovered.<span class="fn">toLowerCase</span>()
+    === intent.customer.<span class="fn">toLowerCase</span>()
+}</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- USE CASES -->
+<section class="usecases" id="usecases">
+  <div class="container">
+    <div class="section-header section-header-center">
+      <div class="section-eyebrow">Use cases</div>
+      <h2 class="section-title">Built for real commerce</h2>
+      <p class="section-sub">Anywhere people transact but connectivity is unreliable, HashPoint turns smartphones into crypto terminals.</p>
+    </div>
+    <div class="use-grid">
+      <div class="use-card">
+        <div class="use-icon" style="background:#E8F0FE;">
+          <svg viewBox="0 0 26 26" fill="none"><path d="M4 6h18v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm0 0l2-3h14l2 3" stroke="#185FA5" stroke-width="1.4"/><path d="M9 12h8M9 15.5h5" stroke="#185FA5" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </div>
+        <div class="use-title">Street markets</div>
+        <div class="use-text">Mobile traders and market stall operators accept USDC from customers with no internet dependency. Settlement happens in batch at end of trading day.</div>
+        <div class="use-region">West Africa · Southeast Asia</div>
+      </div>
+      <div class="use-card">
+        <div class="use-icon" style="background:#E6FAF3;">
+          <svg viewBox="0 0 26 26" fill="none"><path d="M13 3L4 8v10l9 5 9-5V8L13 3z" stroke="#007A4D" stroke-width="1.4" fill="none"/><path d="M13 3v20M4 8l9 5 9-5" stroke="#007A4D" stroke-width="1.4"/></svg>
+        </div>
+        <div class="use-title">Agricultural trade</div>
+        <div class="use-text">Farmers and cooperatives settle produce transactions in rural areas with no 4G coverage. Payments queue until the buyer reaches connectivity.</div>
+        <div class="use-region">East Africa · South Asia</div>
+      </div>
+      <div class="use-card">
+        <div class="use-icon" style="background:#FAEEDA;">
+          <svg viewBox="0 0 26 26" fill="none"><rect x="3" y="5" width="20" height="16" rx="2" stroke="#854F0B" stroke-width="1.4"/><path d="M3 10h20M8 15h2M12 15h6" stroke="#854F0B" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </div>
+        <div class="use-title">Event ticketing</div>
+        <div class="use-text">Stadiums, festivals, and outdoor venues with unreliable networks. Staff terminals collect payments offline and sync during intermissions or after the event.</div>
+        <div class="use-region">Global events · Pop-up markets</div>
+      </div>
+      <div class="use-card">
+        <div class="use-icon" style="background:#EEEDFE;">
+          <svg viewBox="0 0 26 26" fill="none"><path d="M13 3C7.48 3 3 7.48 3 13s4.48 10 10 10 10-4.48 10-10S18.52 3 13 3zm0 3c1.93 0 3.5 1.57 3.5 3.5S14.93 13 13 13s-3.5-1.57-3.5-3.5S11.07 6 13 6zm0 14c-2.67 0-5.03-1.3-6.5-3.3C6.53 14.9 9.6 14 13 14s6.47.9 6.5 2.7C18.03 18.7 15.67 20 13 20z" fill="#534AB7" opacity=".8"/></svg>
+        </div>
+        <div class="use-title">Remittance recipients</div>
+        <div class="use-text">Local agents distribute remittances to recipients in areas with poor connectivity. Cryptographic receipts prove every disbursement even before chain confirmation.</div>
+        <div class="use-region">Latin America · Central Asia</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARISON -->
+<section class="comparison">
+  <div class="container">
+    <div class="section-header section-header-center">
+      <div class="section-eyebrow">Comparison</div>
+      <h2 class="section-title">How HashPoint compares</h2>
+    </div>
+    <div class="compare-table-wrap">
+      <table class="compare">
+        <thead>
+          <tr>
+            <th style="width:220px;">Capability</th>
+            <th class="highlight-col"><div class="col-head">HashPoint <span class="col-head-badge">us</span></div></th>
+            <th>Traditional crypto wallet</th>
+            <th>Mobile money (M-Pesa)</th>
+            <th>Cash</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Works offline at POS</td>
+            <td class="highlight-col"><span class="check">✓</span> Full offline</td>
+            <td><span class="cross">✗</span> Requires RPC</td>
+            <td><span class="check">✓</span> USSD offline</td>
+            <td><span class="check">✓</span></td>
+          </tr>
+          <tr>
+            <td>Cryptographic fraud prevention</td>
+            <td class="highlight-col"><span class="check">✓</span> Merkle proofs</td>
+            <td><span class="check">✓</span> On-chain</td>
+            <td><span class="partial">— </span>Centralized</td>
+            <td><span class="cross">✗</span> None</td>
+          </tr>
+          <tr>
+            <td>On-chain settlement receipt</td>
+            <td class="highlight-col"><span class="check">✓</span> HSP receipt</td>
+            <td><span class="check">✓</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="cross">✗</span></td>
+          </tr>
+          <tr>
+            <td>Non-custodial</td>
+            <td class="highlight-col"><span class="check">✓</span> Always</td>
+            <td><span class="check">✓</span></td>
+            <td><span class="cross">✗</span> Custodial</td>
+            <td><span class="check">✓</span></td>
+          </tr>
+          <tr>
+            <td>Batch settlement (gas efficiency)</td>
+            <td class="highlight-col"><span class="check">✓</span> Up to 50×</td>
+            <td><span class="cross">✗</span> 1 tx each</td>
+            <td><span class="partial">—</span> N/A</td>
+            <td><span class="partial">—</span> N/A</td>
+          </tr>
+          <tr>
+            <td>No smartphone required for customer</td>
+            <td class="highlight-col"><span class="partial">—</span> Wallet needed</td>
+            <td><span class="partial">—</span></td>
+            <td><span class="check">✓</span> Feature phone</td>
+            <td><span class="check">✓</span></td>
+          </tr>
+          <tr>
+            <td>Cross-border settlement</td>
+            <td class="highlight-col"><span class="check">✓</span> USDC/HSK</td>
+            <td><span class="check">✓</span></td>
+            <td><span class="cross">✗</span> Country-locked</td>
+            <td><span class="partial">—</span> FX friction</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials">
+  <div class="container">
+    <div class="section-header section-header-center">
+      <div class="section-eyebrow">Early feedback</div>
+      <h2 class="section-title">What merchants are saying</h2>
+    </div>
+    <div class="testimonial-grid">
+      <div class="testimonial-card">
+        <div>
+          <div class="quote-mark">"</div>
+          <p class="quote-text">I run a fabric stall in Balogun Market. My internet drops ten times a day. HashPoint is the first crypto app that doesn't care — I just collect the QR and settle everything at night when I get home.</p>
+        </div>
+        <div class="quote-author">
+          <div class="author-avatar" style="background:#E6FAF3;color:#007A4D;">AO</div>
+          <div>
+            <div class="author-name">Adaeze Okafor</div>
+            <div class="author-role">Textile merchant · Lagos, Nigeria</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial-card">
+        <div>
+          <div class="quote-mark">"</div>
+          <p class="quote-text">The Merkle nonce system is genuinely elegant. As a protocol developer I was worried about double-spend in offline scenarios — this is the right cryptographic answer. Clean, auditable, composable.</p>
+        </div>
+        <div class="quote-author">
+          <div class="author-avatar" style="background:#E8F0FE;color:#185FA5;">KT</div>
+          <div>
+            <div class="author-name">Kwame Tetteh</div>
+            <div class="author-role">Smart contract developer · Accra, Ghana</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial-card">
+        <div>
+          <div class="quote-mark">"</div>
+          <p class="quote-text">We piloted HashPoint at a 3,000-person outdoor festival. The relay service handled settlement for 140 vendor terminals without a single failure. The HSP receipts made reconciliation trivial.</p>
+        </div>
+        <div class="quote-author">
+          <div class="author-avatar" style="background:#FAEEDA;color:#633806;">RS</div>
+          <div>
+            <div class="author-name">Rohan Sharma</div>
+            <div class="author-role">Events operator · Mumbai, India</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="start">
+  <div class="container">
+    <h2>Start accepting crypto <em>everywhere.</em></h2>
+    <p>Deploy HashPoint on HashKey Chain testnet in under 20 minutes. Full source, MIT licensed.</p>
+    <div class="cta-buttons">
+      <a href="/dashboard" class="btn-cta-primary">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1C4.13 1 1 4.13 1 8c0 3.09 2 5.71 4.75 6.64.35.06.48-.15.48-.34v-1.2c-1.94.42-2.35-.94-2.35-.94-.32-.81-.78-1.02-.78-1.02-.64-.44.05-.43.05-.43.7.05 1.07.72 1.07.72.62 1.07 1.63.76 2.03.58.06-.45.24-.76.44-.93-1.55-.18-3.18-.78-3.18-3.46 0-.76.27-1.39.72-1.88-.07-.18-.31-.89.07-1.85 0 0 .58-.19 1.91.72A6.65 6.65 0 018 4.8c.59 0 1.19.08 1.74.24 1.32-.91 1.9-.72 1.9-.72.38.96.14 1.67.07 1.85.45.49.72 1.12.72 1.88 0 2.69-1.64 3.28-3.2 3.45.25.22.47.64.47 1.29v1.92c0 .19.13.41.48.34A7 7 0 0015 8c0-3.87-3.13-7-7-7z" fill="white"/></svg>
+        View on GitHub
+      </a>
+      <a href="#how" class="btn-cta-secondary">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.5C4.41 1.5 1.5 4.41 1.5 8S4.41 14.5 8 14.5 14.5 11.59 14.5 8 11.59 1.5 8 1.5zM7 11V7h2v4H7zm0-6V3h2v2H7z" fill="white"/></svg>
+        Read the docs
+      </a>
+    </div>
+    <p class="cta-note">Deployed on HashKey Chain testnet (chainId 133) · MIT License · PayFi track submission</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="logo">
+          <div class="logo-mark">
+            <svg viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="6" height="6" rx="1.5" fill="white"/><rect x="10" y="2" width="6" height="6" rx="1.5" fill="white" opacity="0.5"/><rect x="2" y="10" width="6" height="6" rx="1.5" fill="white" opacity="0.5"/><rect x="10" y="10" width="6" height="6" rx="1.5" fill="#00C27C"/></svg>
+          </div>
+          <span class="logo-name" style="color:white;">HashPoint</span>
+        </div>
+        <p>Offline-first crypto point-of-sale built on HashKey Chain. Enabling merchants in low-connectivity markets to accept digital payments without internet.</p>
+      </div>
+      <div>
+        <div class="footer-col-title">Protocol</div>
+        <ul class="footer-links">
+          <li><a href="#">NonceRegistry</a></li>
+          <li><a href="#">HashPointEscrow</a></li>
+          <li><a href="#">HSPAdapter</a></li>
+          <li><a href="#">MerchantRegistry</a></li>
+          <li><a href="#">Relay service</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">Developers</div>
+        <ul class="footer-links">
+          <li><a href="#">Documentation</a></li>
+          <li><a href="#">GitHub</a></li>
+          <li><a href="#">SDK reference</a></li>
+          <li><a href="#">Testnet deploy</a></li>
+          <li><a href="#">Security audit</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">Community</div>
+        <ul class="footer-links">
+          <li><a href="#">HashKey Chain</a></li>
+          <li><a href="#">Telegram</a></li>
+          <li><a href="#">Hackathon page</a></li>
+          <li><a href="#">DoraHacks</a></li>
+          <li><a href="#">hashfans.io</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 HashPoint · Built for HashKey Chain On-Chain Horizon Hackathon · PayFi track</p>
+      <div class="footer-badges">
+        <span class="footer-badge">HashKey Chain</span>
+        <span class="footer-badge">HSP native</span>
+        <span class="footer-badge">MIT License</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const steps = document.querySelectorAll('.step');
+  steps.forEach(step => {
+    step.addEventListener('click', () => {
+      steps.forEach(s => s.classList.remove('active'));
+      step.classList.add('active');
+    });
+  });
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.feature-card, .use-card, .testimonial-card, .tech-row').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(12px)';
+    el.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+    observer.observe(el);
+  });
+</script>
+</body>
+</html>
